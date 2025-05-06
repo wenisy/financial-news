@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金融新闻分析 - xAI测试页面</title>
+  <style>
+    body {
+      font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #1a73e8;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+    textarea {
+      min-height: 150px;
+    }
+    button {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #0d62c9;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 4px;
+      border-left: 4px solid #1a73e8;
+    }
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+      margin-left: 10px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .sentiment {
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .sentiment.good {
+      background: #e6f4ea;
+      color: #137333;
+    }
+    .sentiment.neutral {
+      background: #f8f9fa;
+      color: #5f6368;
+    }
+    .sentiment.bad {
+      background: #fce8e6;
+      color: #c5221f;
+    }
+    .error {
+      color: #c5221f;
+      background: #fce8e6;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>金融新闻分析 - xAI测试页面</h1>
+  
+  <div class="card">
+    <h2>测试xAI分析功能</h2>
+    <p>输入股票信息和新闻内容，测试AI分析功能</p>
+    
+    <form id="testForm">
+      <div>
+        <label for="symbol">股票代码</label>
+        <input type="text" id="symbol" value="AAPL" required>
+      </div>
+      
+      <div>
+        <label for="name">公司名称</label>
+        <input type="text" id="name" value="Apple Inc." required>
+      </div>
+      
+      <div>
+        <label for="newsContent">新闻内容</label>
+        <textarea id="newsContent" required>Apple today announced the iPhone 15, featuring a groundbreaking new design and revolutionary AI capabilities. The new device includes a faster A17 chip, improved camera system with 48MP main sensor, and longer battery life. CEO Tim Cook called it "the most advanced iPhone we've ever created" during the company's annual fall event. Analysts expect strong sales for the holiday season, potentially boosting Apple's market share in premium smartphones. The iPhone 15 will be available starting next week with a base price of $799.</textarea>
+      </div>
+      
+      <button type="submit" id="analyzeBtn">分析新闻</button>
+    </form>
+    
+    <div id="result" class="result" style="display: none;">
+      <h3>分析结果</h3>
+      <div id="summary"></div>
+      <div>
+        <strong>情感分析：</strong>
+        <span id="sentiment" class="sentiment"></span>
+      </div>
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+  
+  <script>
+    document.getElementById('testForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const resultDiv = document.getElementById('result');
+      const errorDiv = document.getElementById('error');
+      
+      // 获取表单数据
+      const symbol = document.getElementById('symbol').value;
+      const name = document.getElementById('name').value;
+      const newsContent = document.getElementById('newsContent').value;
+      
+      // 显示加载状态
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = '分析中 <span class="loading"></span>';
+      resultDiv.style.display = 'none';
+      errorDiv.style.display = 'none';
+      
+      try {
+        // 调用API
+        const response = await fetch('/api/test-xai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            stock: { symbol, name },
+            newsContent
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        
+        // 显示结果
+        document.getElementById('summary').textContent = data.summary;
+        
+        const sentimentEl = document.getElementById('sentiment');
+        sentimentEl.textContent = data.sentiment;
+        
+        // 设置情感分析样式
+        sentimentEl.className = 'sentiment';
+        if (data.sentiment === '好') {
+          sentimentEl.classList.add('good');
+        } else if (data.sentiment === '中立') {
+          sentimentEl.classList.add('neutral');
+        } else if (data.sentiment === '坏') {
+          sentimentEl.classList.add('bad');
+        }
+        
+        resultDiv.style.display = 'block';
+      } catch (error) {
+        console.error('分析失败:', error);
+        errorDiv.textContent = `分析失败: ${error.message}`;
+        errorDiv.style.display = 'block';
+      } finally {
+        // 恢复按钮状态
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = '分析新闻';
+      }
+    });
+  </script>
+</body>
+</html>
