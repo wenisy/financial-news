@@ -1,9 +1,20 @@
 {
   "stocks": [
     {
-      "symbol": "TSLA",
+      "symbol": "AAPL",
       "name": "Apple Inc.",
-      "news_sources": ["https://finance.yahoo.com/quote/TSLA/latest-news"]
+      "news_sources": [
+        "https://finance.yahoo.com/quote/AAPL",
+        "https://www.cnbc.com/quotes/AAPL"
+      ]
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla Inc.",
+      "news_sources": [
+        "https://finance.yahoo.com/quote/TSLA",
+        "https://www.cnbc.com/quotes/TSLA"
+      ]
     }
   ],
 
