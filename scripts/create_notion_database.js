@@ -78,7 +78,7 @@ async function createFinancialNewsDatabase() {
           select: {
             options: [
               {
-                name: '好 😀',
+                name: '好📈',
                 color: 'green'
               },
               {
@@ -86,7 +86,7 @@ async function createFinancialNewsDatabase() {
                 color: 'gray'
               },
               {
-                name: '坏 😞',
+                name: '坏 📉',
                 color: 'red'
               }
             ]
