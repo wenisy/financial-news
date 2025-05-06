@@ -1,0 +1,45 @@
+require('dotenv').config();
+const express = require('express');
+const { runAnalysis } = require('./controllers/analysisController');
+const configRoutes = require('./routes/configRoutes');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// 中间件
+app.use(express.json());
+
+// 路由
+app.use('/api/config', configRoutes);
+
+// 触发分析的API端点
+app.post('/api/analyze', async (req, res) => {
+  try {
+    // 启动分析过程
+    const analysisProcess = runAnalysis();
+    
+    // 立即返回响应，不等待分析完成
+    res.status(202).json({
+      message: '分析任务已启动，结果将存储到Notion数据库',
+      status: 'processing'
+    });
+    
+    // 分析过程在后台继续运行
+  } catch (error) {
+    console.error('启动分析任务时出错:', error);
+    res.status(500).json({
+      message: '启动分析任务失败',
+      error: error.message
+    });
+  }
+});
+
+// 健康检查端点
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// 启动服务器
+app.listen(PORT, () => {
+  console.log(`服务器运行在 http://localhost:${PORT}`);
+});

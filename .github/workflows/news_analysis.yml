@@ -1,0 +1,33 @@
+name: 金融新闻分析
+
+on:
+  schedule:
+    # 每天早上8点运行 (UTC时间，对应北京时间16点)
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    # 允许手动触发
+
+jobs:
+  analyze-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 运行新闻分析
+        run: node src/scripts/run-analysis.js
+        env:
+          AI_PROVIDER: ${{ secrets.AI_PROVIDER || 'openai' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
