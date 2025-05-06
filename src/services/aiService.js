@@ -1,11 +1,15 @@
 const OpenAI = require('openai');
 const aiConfig = require('../config/aiConfig');
+const { analyzeNewsWithXai } = require('./xaiService');
 
-// 初始化AI客户端
-const client = new OpenAI({
-  apiKey: aiConfig.apiKey,
-  baseUrl: aiConfig.baseUrl
-});
+// 初始化OpenAI客户端（仅在使用OpenAI时使用）
+let client;
+if (aiConfig.provider === aiConfig.AI_PROVIDERS.OPENAI) {
+  client = new OpenAI({
+    apiKey: aiConfig.apiKey,
+    baseUrl: aiConfig.baseUrl
+  });
+}
 
 /**
  * 使用AI分析新闻内容
@@ -16,75 +20,94 @@ const client = new OpenAI({
  */
 async function analyzeNews(newsContent, stock, promptTemplate) {
   try {
-    // 如果新闻内容为空，返回默认结果
-    if (!newsContent || newsContent.trim() === '') {
-      return {
-        summary: '无法获取新闻内容',
-        sentiment: '中立'
-      };
+    console.log(`使用AI提供商: ${aiConfig.provider}`);
+
+    // 根据提供商选择正确的实现
+    if (aiConfig.provider === aiConfig.AI_PROVIDERS.XAI) {
+      // 使用xAI服务
+      return await analyzeNewsWithXai(newsContent, stock, promptTemplate);
+    } else if (aiConfig.provider === aiConfig.AI_PROVIDERS.OPENAI) {
+      // 使用OpenAI服务
+      return await analyzeNewsWithOpenAI(newsContent, stock, promptTemplate);
+    } else {
+      throw new Error(`不支持的AI提供商: ${aiConfig.provider}`);
     }
-
-    // 使用配置中的提示模板或传入的模板
-    const template = promptTemplate || aiConfig.newsAnalysisPrompt;
-
-    // 准备提示
-    const prompt = template
-      .replace('{stock_name}', stock.name)
-      .replace('{stock_symbol}', stock.symbol)
-      .replace('{news_content}', newsContent);
-
-    // 打印调试信息
-    console.log(`准备调用AI API (${aiConfig.provider}):`);
-    console.log(`- 基础URL: ${aiConfig.baseUrl}`);
-    console.log(`- 模型: ${aiConfig.model}`);
-    console.log(`- API密钥前缀: ${aiConfig.apiKey ? aiConfig.apiKey.substring(0, 10) + '...' : '未设置'}`);
-
-    // 调用AI API
-    try {
-      const response = await client.chat.completions.create({
-        model: aiConfig.model,
-        messages: [
-          { role: 'system', content: aiConfig.systemPrompt },
-          { role: 'user', content: prompt }
-        ],
-        temperature: aiConfig.temperature,
-        max_tokens: aiConfig.maxTokens
-      });
-
-      // 解析响应
-      const content = response.choices[0].message.content;
-
-      // 提取摘要和情感
-      const summary = extractSummary(content);
-      const sentiment = extractSentiment(content);
-
-      return {
-        summary,
-        sentiment
-      };
-    } catch (apiError) {
-      console.error(`调用${aiConfig.provider.toUpperCase()} API失败:`, apiError);
-
-      // 检查是否是认证错误
-      if (apiError.status === 401) {
-        console.error(`认证失败: 请检查${aiConfig.provider.toUpperCase()}_API_KEY环境变量是否正确设置`);
-      }
-
-      // 检查是否是URL错误
-      if (apiError.code === 'ENOTFOUND' || apiError.code === 'ECONNREFUSED') {
-        console.error(`连接失败: 无法连接到 ${aiConfig.baseUrl}`);
-      }
-
-      throw apiError;
-    }
-
-    // 这部分代码已经移到try块内部
   } catch (error) {
     console.error('AI分析新闻失败:', error);
     return {
       summary: '分析过程中出错',
       sentiment: '中立'
     };
+  }
+}
+
+/**
+ * 使用OpenAI分析新闻内容
+ * @param {string} newsContent 新闻内容
+ * @param {Object} stock 股票信息
+ * @param {string} promptTemplate 提示模板
+ * @returns {Promise<Object>} 分析结果，包含摘要和情感分析
+ */
+async function analyzeNewsWithOpenAI(newsContent, stock, promptTemplate) {
+  // 如果新闻内容为空，返回默认结果
+  if (!newsContent || newsContent.trim() === '') {
+    return {
+      summary: '无法获取新闻内容',
+      sentiment: '中立'
+    };
+  }
+
+  // 使用配置中的提示模板或传入的模板
+  const template = promptTemplate || aiConfig.newsAnalysisPrompt;
+
+  // 准备提示
+  const prompt = template
+    .replace('{stock_name}', stock.name)
+    .replace('{stock_symbol}', stock.symbol)
+    .replace('{news_content}', newsContent);
+
+  // 打印调试信息
+  console.log(`准备调用OpenAI API:`);
+  console.log(`- 基础URL: ${aiConfig.baseUrl}`);
+  console.log(`- 模型: ${aiConfig.model}`);
+  console.log(`- API密钥前缀: ${aiConfig.apiKey ? aiConfig.apiKey.substring(0, 10) + '...' : '未设置'}`);
+
+  try {
+    const response = await client.chat.completions.create({
+      model: aiConfig.model,
+      messages: [
+        { role: 'system', content: aiConfig.systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      temperature: aiConfig.temperature,
+      max_tokens: aiConfig.maxTokens
+    });
+
+    // 解析响应
+    const content = response.choices[0].message.content;
+
+    // 提取摘要和情感
+    const summary = extractSummary(content);
+    const sentiment = extractSentiment(content);
+
+    return {
+      summary,
+      sentiment
+    };
+  } catch (apiError) {
+    console.error(`调用OpenAI API失败:`, apiError);
+
+    // 检查是否是认证错误
+    if (apiError.status === 401) {
+      console.error(`认证失败: 请检查OPENAI_API_KEY环境变量是否正确设置`);
+    }
+
+    // 检查是否是URL错误
+    if (apiError.code === 'ENOTFOUND' || apiError.code === 'ECONNREFUSED') {
+      console.error(`连接失败: 无法连接到 ${aiConfig.baseUrl}`);
+    }
+
+    throw apiError;
   }
 }
 
