@@ -4,6 +4,7 @@ const path = require('path');
 const { runAnalysis } = require('./controllers/analysisController');
 const configRoutes = require('./routes/configRoutes');
 const testRoutes = require('./routes/testRoutes');
+const articleRoutes = require('./routes/articleRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // 路由
 app.use('/api/config', configRoutes);
 app.use('/api', testRoutes);
+app.use('/api/articles', articleRoutes);
 
 // 触发分析的API端点
 app.post('/api/analyze', async (req, res) => {
