@@ -33,28 +33,52 @@ async function analyzeNews(newsContent, stock, promptTemplate) {
       .replace('{stock_symbol}', stock.symbol)
       .replace('{news_content}', newsContent);
 
+    // 打印调试信息
+    console.log(`准备调用AI API (${aiConfig.provider}):`);
+    console.log(`- 基础URL: ${aiConfig.baseUrl}`);
+    console.log(`- 模型: ${aiConfig.model}`);
+    console.log(`- API密钥前缀: ${aiConfig.apiKey ? aiConfig.apiKey.substring(0, 10) + '...' : '未设置'}`);
+
     // 调用AI API
-    const response = await client.chat.completions.create({
-      model: aiConfig.model,
-      messages: [
-        { role: 'system', content: aiConfig.systemPrompt },
-        { role: 'user', content: prompt }
-      ],
-      temperature: aiConfig.temperature,
-      max_tokens: aiConfig.maxTokens
-    });
+    try {
+      const response = await client.chat.completions.create({
+        model: aiConfig.model,
+        messages: [
+          { role: 'system', content: aiConfig.systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        temperature: aiConfig.temperature,
+        max_tokens: aiConfig.maxTokens
+      });
 
-    // 解析响应
-    const content = response.choices[0].message.content;
+      // 解析响应
+      const content = response.choices[0].message.content;
 
-    // 提取摘要和情感
-    const summary = extractSummary(content);
-    const sentiment = extractSentiment(content);
+      // 提取摘要和情感
+      const summary = extractSummary(content);
+      const sentiment = extractSentiment(content);
 
-    return {
-      summary,
-      sentiment
-    };
+      return {
+        summary,
+        sentiment
+      };
+    } catch (apiError) {
+      console.error(`调用${aiConfig.provider.toUpperCase()} API失败:`, apiError);
+
+      // 检查是否是认证错误
+      if (apiError.status === 401) {
+        console.error(`认证失败: 请检查${aiConfig.provider.toUpperCase()}_API_KEY环境变量是否正确设置`);
+      }
+
+      // 检查是否是URL错误
+      if (apiError.code === 'ENOTFOUND' || apiError.code === 'ECONNREFUSED') {
+        console.error(`连接失败: 无法连接到 ${aiConfig.baseUrl}`);
+      }
+
+      throw apiError;
+    }
+
+    // 这部分代码已经移到try块内部
   } catch (error) {
     console.error('AI分析新闻失败:', error);
     return {
