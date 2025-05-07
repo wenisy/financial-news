@@ -3,40 +3,40 @@ name: Fetch Yahoo Finance News
 on:
   schedule:
     # 每2小时运行一次
-    - cron: '0 */2 * * *'
-  
+    - cron: "0 */2 * * *"
+
   # 允许手动触发
   workflow_dispatch:
 
 jobs:
   fetch-news:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: "23.7.0"
+          cache: "npm"
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Install required system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y curl
-      
+
       - name: Fetch Yahoo Finance News
         run: node scripts/fetch-yahoo-news.js
         env:
           # Notion配置
           NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
           NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
-          
+
           # AI配置
           AI_PROVIDER: ${{ secrets.AI_PROVIDER }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
