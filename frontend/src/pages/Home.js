@@ -56,11 +56,19 @@ const Home = () => {
             setLoading(true);
             const response = await articleAPI.extractArticleInfo(value);
 
-            // 更新行数据
-            const updatedRows = [...inputRows];
-            updatedRows[index].symbol = response.data.symbol || 'Market';
-            updatedRows[index].company = response.data.company || 'Market';
-            setInputRows(updatedRows);
+            // 检查文章是否已存在
+            if (response.data.skipped && response.data.reason === 'article_exists') {
+              // 文章已存在，可以在UI上显示提示，或者直接跳过
+              console.log(`文章已存在于数据库中: ${value}`);
+              // 这里我们选择不更新输入行，但可以添加一个提示
+              setError(`文章已存在于数据库中: ${value}`);
+            } else {
+              // 更新行数据
+              const updatedRows = [...inputRows];
+              updatedRows[index].symbol = response.data.symbol || 'Market';
+              updatedRows[index].company = response.data.company || 'Market';
+              setInputRows(updatedRows);
+            }
             setLoading(false);
           }
         } catch (err) {
@@ -141,6 +149,20 @@ const Home = () => {
       // 否则，先提取股票信息
       const response = await articleAPI.extractArticleInfo(url);
 
+      // 检查文章是否已存在
+      if (response.data.skipped && response.data.reason === 'article_exists') {
+        // 文章已存在，直接显示结果
+        setShowResults(true);
+        setBatchResults([{
+          url,
+          skipped: true,
+          reason: '文章已存在于数据库中',
+          symbol: 'N/A',
+          company: 'N/A'
+        }]);
+        return;
+      }
+
       setExtractResult({
         url,
         title: response.data.title,
@@ -180,6 +202,21 @@ const Home = () => {
           if (!symbol || !company) {
             try {
               const extractResponse = await articleAPI.extractArticleInfo(url);
+
+              // 检查文章是否已存在
+              if (extractResponse.data.skipped && extractResponse.data.reason === 'article_exists') {
+                // 文章已存在，添加到结果中
+                results.push({
+                  url,
+                  skipped: true,
+                  reason: '文章已存在于数据库中',
+                  symbol: symbol || 'N/A',
+                  company: company || 'N/A'
+                });
+                // 实时更新结果
+                setBatchResults([...results]);
+                continue; // 跳过当前文章，处理下一篇
+              }
 
               // 检查是否成功获取标题（不是"无法获取标题"）
               if (extractResponse.data.title && extractResponse.data.title !== '无法获取标题') {

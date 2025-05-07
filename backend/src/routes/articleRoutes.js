@@ -8,6 +8,7 @@ const express = require('express');
 const { analyzeArticleFromUrl, fetchArticleContent, fetchWithCurl } = require('../services/articleService');
 const { verifyToken } = require('../middleware/auth');
 const { extractStockInfo } = require('../services/aiService');
+const { isArticleExists } = require('../services/notionService');
 
 const router = express.Router();
 
@@ -155,6 +156,23 @@ router.post('/extract', async (req, res) => {
     }
 
     console.log(`从文章中提取信息: ${url}`);
+
+    // 首先检查文章是否已存在于Notion数据库中
+    try {
+      const exists = await isArticleExists(url);
+      if (exists) {
+        console.log(`文章已存在于Notion数据库中，跳过提取: ${url}`);
+        return res.status(200).json({
+          success: true,
+          message: '文章已存在于数据库中',
+          skipped: true,
+          reason: 'article_exists'
+        });
+      }
+    } catch (checkError) {
+      console.error('检查文章是否存在失败:', checkError);
+      // 如果检查失败，继续处理，不中断流程
+    }
 
     // 直接使用curl方法获取文章内容
     // 这里我们直接调用fetchWithCurl而不是fetchArticleContent，以确保使用curl方法
