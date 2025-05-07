@@ -11,6 +11,8 @@ on:
 jobs:
   fetch-news:
     runs-on: ubuntu-latest
+    # 只有在所有必要的Secrets都存在时才运行
+    if: ${{ secrets.NOTION_SECRET != '' && secrets.NOTION_DATABASE_ID != '' && secrets.XAI_API_KEY != '' }}
 
     steps:
       - name: Checkout code
