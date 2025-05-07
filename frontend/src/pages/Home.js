@@ -159,6 +159,8 @@ const Home = () => {
   const processBatchRows = async (rows) => {
     setLoading(true);
     setBatchResults([]);
+    // 立即显示结果区域，不等待全部处理完成
+    setShowResults(true);
 
     try {
       const results = [];
@@ -192,6 +194,8 @@ const Home = () => {
                   symbol: symbol || 'Market',
                   company: company || 'Market'
                 });
+                // 实时更新结果
+                setBatchResults([...results]);
                 continue; // 跳过当前文章，处理下一篇
               }
             } catch (extractErr) {
@@ -202,6 +206,8 @@ const Home = () => {
                 symbol: symbol || 'Market',
                 company: company || 'Market'
               });
+              // 实时更新结果
+              setBatchResults([...results]);
               continue; // 跳过当前文章，处理下一篇
             }
           } else {
@@ -222,6 +228,9 @@ const Home = () => {
               summary: analyzeResponse.data.summary,
               sentiment: analyzeResponse.data.sentiment
             });
+
+            // 实时更新结果
+            setBatchResults([...results]);
           }
         } catch (err) {
           console.error(`处理URL失败: ${url}`, err);
@@ -244,13 +253,11 @@ const Home = () => {
               company: company || 'Market'
             });
           }
+
+          // 实时更新结果
+          setBatchResults([...results]);
         }
-
-        // 更新批量结果
-        setBatchResults([...results]);
       }
-
-      setShowResults(true);
     } catch (err) {
       console.error('批量处理失败:', err);
       setError(err.response?.data?.message || '批量处理失败，请稍后再试');
@@ -262,6 +269,16 @@ const Home = () => {
   // 执行分析
   const performAnalysis = async (url, symbolValue, companyValue) => {
     setLoading(true);
+    // 立即显示结果区域
+    setShowResults(true);
+    // 先显示处理中的状态
+    setBatchResults([{
+      url,
+      title: '处理中...',
+      symbol: symbolValue,
+      company: companyValue,
+      processing: true
+    }]);
 
     try {
       const response = await articleAPI.analyzeArticle(url, symbolValue, companyValue);
@@ -275,8 +292,6 @@ const Home = () => {
         summary: response.data.summary,
         sentiment: response.data.sentiment
       }]);
-
-      setShowResults(true);
     } catch (err) {
       console.error('分析失败:', err);
 
@@ -289,10 +304,13 @@ const Home = () => {
           symbol: symbolValue,
           company: companyValue
         }]);
-
-        setShowResults(true);
       } else {
-        setError(err.response?.data?.message || '分析失败，请稍后再试');
+        setBatchResults([{
+          url,
+          error: err.response?.data?.message || '分析失败，请稍后再试',
+          symbol: symbolValue,
+          company: companyValue
+        }]);
       }
     } finally {
       setLoading(false);
@@ -339,6 +357,7 @@ const Home = () => {
               <table className="input-table">
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>新闻链接</th>
                     <th>股票代码 (选填)</th>
                     <th>公司名称 (选填)</th>
@@ -348,6 +367,7 @@ const Home = () => {
                 <tbody>
                   {inputRows.map((row, index) => (
                     <tr key={index}>
+                      <td>{index + 1}</td>
                       <td>
                         <input
                           type="text"
@@ -465,6 +485,7 @@ const Home = () => {
                   <th>公司名称</th>
                   <th>发布日期</th>
                   <th>情感分析</th>
+                  <th>原文链接</th>
                   <th>操作</th>
                 </tr>
               </thead>
@@ -475,12 +496,13 @@ const Home = () => {
                     <td className="title-cell" title={result.title || result.url}>
                       {result.error ? '处理失败' :
                        result.skipped ? '已跳过' :
+                       result.processing ? '处理中...' :
                        result.title || '未知标题'}
                     </td>
                     <td>{result.symbol}</td>
                     <td>{result.company}</td>
                     <td>
-                      {result.error || result.skipped ? 'N/A' :
+                      {result.error || result.skipped || result.processing ? 'N/A' :
                        result.publishDate ? new Date(result.publishDate).toLocaleString() : '未知日期'}
                     </td>
                     <td>
@@ -488,6 +510,8 @@ const Home = () => {
                         <span className="error">{result.error}</span>
                       ) : result.skipped ? (
                         <span className="skipped">{result.reason}</span>
+                      ) : result.processing ? (
+                        <span className="processing">处理中...</span>
                       ) : (
                         <span className={`sentiment ${
                           result.sentiment === '好' || result.sentiment === '积极' ? 'good' :
@@ -496,6 +520,11 @@ const Home = () => {
                           {result.sentiment || '未知'}
                         </span>
                       )}
+                    </td>
+                    <td>
+                      <a href={result.url} target="_blank" rel="noopener noreferrer" className="article-link">
+                        查看原文
+                      </a>
                     </td>
                     <td>
                       {result.error ? (
@@ -512,6 +541,8 @@ const Home = () => {
                         >
                           强制分析
                         </button>
+                      ) : result.processing ? (
+                        <span className="processing-text">请稍候...</span>
                       ) : (
                         <button
                           onClick={() => handleViewSummary(result)}

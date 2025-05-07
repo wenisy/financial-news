@@ -338,6 +338,21 @@
   font-style: italic;
 }
 
+.processing {
+  color: #1a73e8;
+  font-style: italic;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #e8f0fe;
+}
+
+.processing-text {
+  color: #1a73e8;
+  font-style: italic;
+  font-size: 12px;
+}
+
 .action-btn {
   padding: 6px 12px;
   background-color: #f1f3f4;
@@ -346,6 +361,21 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+}
+
+.article-link {
+  color: #1a73e8;
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.article-link:hover {
+  background-color: #e8f0fe;
+  text-decoration: underline;
 }
 
 .view-summary-btn {
