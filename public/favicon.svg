@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="256" cy="256" r="256" fill="#1a73e8"/>
+  
+  <!-- 股票图表 -->
+  <path d="M128 384L192 320L256 352L320 256L384 192" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- 上升箭头 -->
+  <path d="M352 192L384 192L384 224" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- 美元符号 -->
+  <path d="M256 128V384" stroke="white" stroke-width="16" stroke-linecap="round"/>
+  <path d="M224 144H272C289.673 144 304 158.327 304 176C304 193.673 289.673 208 272 208H240C222.327 208 208 222.327 208 240C208 257.673 222.327 272 240 272H288" stroke="white" stroke-width="16" stroke-linecap="round"/>
+</svg>

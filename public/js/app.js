@@ -11,6 +11,9 @@ let currentAnalysis = {
   userCompany: ''
 };
 
+// 存储批量分析的结果
+let batchResults = [];
+
 document.addEventListener('DOMContentLoaded', () => {
   setupAppListeners();
 });
@@ -29,74 +32,38 @@ function setupAppListeners() {
     const errorDiv = document.getElementById('analyzeError');
 
     // 获取表单数据
-    const url = document.getElementById('newsUrl').value;
-    const symbol = document.getElementById('symbol').value;
-    const name = document.getElementById('companyName').value;
+    const urlInput = document.getElementById('newsUrl').value.trim();
+    const symbol = document.getElementById('symbol').value.trim();
+    const name = document.getElementById('companyName').value.trim();
+    const isBatchMode = document.getElementById('batchMode').checked;
 
-    // 保存用户输入的值
-    currentAnalysis = {
-      url,
-      extractedSymbol: '',
-      extractedCompany: '',
-      userSymbol: symbol,
-      userCompany: name
-    };
+    // 检查是否是批量模式
+    if (isBatchMode) {
+      // 分割URL，处理多个链接
+      const urls = urlInput.split(',').map(url => url.trim()).filter(url => url);
 
-    // 显示加载状态
-    analyzeBtn.disabled = true;
-    analyzeBtn.innerHTML = '提取信息中 <span class="loading"></span>';
-    extractResultDiv.style.display = 'none';
-    analyzeResultDiv.style.display = 'none';
-    errorDiv.style.display = 'none';
-
-    try {
-      // 如果用户已经输入了股票代码和公司名称，直接进行分析
-      if (symbol && name) {
-        await performAnalysis(url, symbol, name);
+      if (urls.length === 0) {
+        errorDiv.textContent = '请输入至少一个有效的新闻链接';
+        errorDiv.style.display = 'block';
         return;
       }
 
-      // 否则，先提取股票信息
-      const extractResponse = await fetch('/api/articles/extract', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ url })
-      });
-
-      if (!extractResponse.ok) {
-        const errorData = await extractResponse.json();
-        throw new Error(errorData.message || '提取信息失败');
-      }
-
-      const extractData = await extractResponse.json();
-
-      // 保存提取的信息
-      currentAnalysis.extractedSymbol = extractData.symbol || '';
-      currentAnalysis.extractedCompany = extractData.company || '';
-
-      // 显示提取结果
-      document.getElementById('extractedSymbol').textContent = currentAnalysis.extractedSymbol || '未找到';
-      document.getElementById('extractedCompany').textContent = currentAnalysis.extractedCompany || '未找到';
-
-      // 显示提取结果区域
-      extractResultDiv.style.display = 'block';
-    } catch (error) {
-      console.error('提取信息失败:', error);
-
-      // 如果是认证错误，退出登录
-      if (error.message.includes('认证') || error.message.includes('令牌') || error.message.includes('token')) {
-        logout();
-        errorDiv.textContent = '登录已过期，请重新登录';
+      if (urls.length === 1) {
+        // 如果只有一个URL，使用单个处理模式
+        processSingleUrl(urls[0], symbol, name, analyzeBtn, extractResultDiv, analyzeResultDiv, errorDiv);
       } else {
-        errorDiv.textContent = `提取信息失败: ${error.message}`;
+        // 批量处理多个URL
+        processBatchUrls(urls, symbol, name, analyzeBtn, analyzeResultDiv, errorDiv);
       }
-
-      errorDiv.style.display = 'block';
-    } finally {
-      // 恢复按钮状态
-      analyzeBtn.disabled = false;
-      analyzeBtn.textContent = '分析新闻';
+    } else {
+      // 单个URL处理模式
+      processSingleUrl(urlInput, symbol, name, analyzeBtn, extractResultDiv, analyzeResultDiv, errorDiv);
     }
+
+    // 重置显示
+    extractResultDiv.style.display = 'none';
+    analyzeResultDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
   });
 
   // 接受提取的股票代码
@@ -148,6 +115,277 @@ function setupAppListeners() {
 }
 
 /**
+ * 处理单个URL
+ * @param {string} url - 新闻URL
+ * @param {string} symbol - 股票代码
+ * @param {string} name - 公司名称
+ * @param {HTMLElement} analyzeBtn - 分析按钮
+ * @param {HTMLElement} extractResultDiv - 提取结果区域
+ * @param {HTMLElement} analyzeResultDiv - 分析结果区域
+ * @param {HTMLElement} errorDiv - 错误信息区域
+ */
+async function processSingleUrl(url, symbol, name, analyzeBtn, extractResultDiv, analyzeResultDiv, errorDiv) {
+  // 保存用户输入的值
+  currentAnalysis = {
+    url,
+    extractedSymbol: '',
+    extractedCompany: '',
+    userSymbol: symbol,
+    userCompany: name
+  };
+
+  // 显示加载状态
+  analyzeBtn.disabled = true;
+  analyzeBtn.innerHTML = '提取信息中 <span class="loading"></span>';
+
+  try {
+    // 如果用户已经输入了股票代码和公司名称，直接进行分析
+    if (symbol && name) {
+      await performAnalysis(url, symbol, name);
+      return;
+    }
+
+    // 否则，先提取股票信息
+    const extractResponse = await fetch('/api/articles/extract', {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ url })
+    });
+
+    if (!extractResponse.ok) {
+      const errorData = await extractResponse.json();
+      throw new Error(errorData.message || '提取信息失败');
+    }
+
+    const extractData = await extractResponse.json();
+
+    // 保存提取的信息
+    currentAnalysis.extractedSymbol = extractData.symbol || '';
+    currentAnalysis.extractedCompany = extractData.company || '';
+
+    // 显示提取结果
+    document.getElementById('extractedSymbol').textContent = currentAnalysis.extractedSymbol || '未找到';
+    document.getElementById('extractedCompany').textContent = currentAnalysis.extractedCompany || '未找到';
+
+    // 显示提取结果区域
+    extractResultDiv.style.display = 'block';
+  } catch (error) {
+    console.error('提取信息失败:', error);
+
+    // 如果是认证错误，退出登录
+    if (error.message.includes('认证') || error.message.includes('令牌') || error.message.includes('token')) {
+      logout();
+      errorDiv.textContent = '登录已过期，请重新登录';
+    } else {
+      errorDiv.textContent = `提取信息失败: ${error.message}`;
+    }
+
+    errorDiv.style.display = 'block';
+  } finally {
+    // 恢复按钮状态
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = '分析新闻';
+  }
+}
+
+/**
+ * 处理批量URL
+ * @param {string[]} urls - 新闻URL数组
+ * @param {string} symbol - 股票代码
+ * @param {string} name - 公司名称
+ * @param {HTMLElement} analyzeBtn - 分析按钮
+ * @param {HTMLElement} analyzeResultDiv - 分析结果区域
+ * @param {HTMLElement} errorDiv - 错误信息区域
+ */
+async function processBatchUrls(urls, symbol, name, analyzeBtn, analyzeResultDiv, errorDiv) {
+  // 重置批量结果
+  batchResults = [];
+
+  // 显示加载状态
+  analyzeBtn.disabled = true;
+  analyzeBtn.innerHTML = `批量分析中 (0/${urls.length}) <span class="loading"></span>`;
+
+  // 获取批量结果容器
+  const batchResultsDiv = document.getElementById('batchResults');
+  batchResultsDiv.innerHTML = '';
+
+  // 显示单个结果区域或批量结果区域
+  document.getElementById('singleResult').style.display = 'none';
+  batchResultsDiv.style.display = 'block';
+
+  try {
+    // 依次处理每个URL
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+
+      // 更新进度
+      analyzeBtn.innerHTML = `批量分析中 (${i+1}/${urls.length}) <span class="loading"></span>`;
+
+      try {
+        // 提取股票信息（如果用户没有提供）
+        let finalSymbol = symbol;
+        let finalCompany = name;
+
+        if (!symbol || !name) {
+          // 提取股票信息
+          const extractResponse = await fetch('/api/articles/extract', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ url })
+          });
+
+          if (extractResponse.ok) {
+            const extractData = await extractResponse.json();
+            finalSymbol = symbol || extractData.symbol || '';
+            finalCompany = name || extractData.company || '';
+          }
+        }
+
+        // 如果有股票信息，进行分析
+        if (finalSymbol && finalCompany) {
+          // 分析文章
+          const result = await analyzeArticle(url, finalSymbol, finalCompany);
+
+          // 添加到批量结果
+          batchResults.push({
+            url,
+            symbol: finalSymbol,
+            company: finalCompany,
+            title: result.title,
+            publishDate: result.publishDate,
+            summary: result.summary,
+            sentiment: result.sentiment
+          });
+
+          // 更新批量结果显示
+          updateBatchResultsDisplay();
+        } else {
+          // 添加错误结果
+          batchResults.push({
+            url,
+            error: '无法提取股票信息'
+          });
+
+          // 更新批量结果显示
+          updateBatchResultsDisplay();
+        }
+      } catch (error) {
+        console.error(`处理URL失败: ${url}`, error);
+
+        // 添加错误结果
+        batchResults.push({
+          url,
+          error: error.message
+        });
+
+        // 更新批量结果显示
+        updateBatchResultsDisplay();
+      }
+    }
+
+    // 显示分析结果区域
+    analyzeResultDiv.style.display = 'block';
+  } catch (error) {
+    console.error('批量处理失败:', error);
+
+    // 如果是认证错误，退出登录
+    if (error.message.includes('认证') || error.message.includes('令牌') || error.message.includes('token')) {
+      logout();
+      errorDiv.textContent = '登录已过期，请重新登录';
+    } else {
+      errorDiv.textContent = `批量处理失败: ${error.message}`;
+    }
+
+    errorDiv.style.display = 'block';
+  } finally {
+    // 恢复按钮状态
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = '分析新闻';
+  }
+}
+
+/**
+ * 更新批量结果显示
+ */
+function updateBatchResultsDisplay() {
+  const batchResultsDiv = document.getElementById('batchResults');
+  batchResultsDiv.innerHTML = '';
+
+  // 为每个结果创建HTML
+  batchResults.forEach((result, index) => {
+    const resultItem = document.createElement('div');
+    resultItem.className = 'batch-item';
+
+    if (result.error) {
+      // 显示错误结果
+      resultItem.innerHTML = `
+        <h4>结果 #${index + 1} - 处理失败</h4>
+        <span class="batch-url">${result.url}</span>
+        <div class="error">${result.error}</div>
+      `;
+    } else {
+      // 显示成功结果
+      const sentimentClass = result.sentiment === '好' || result.sentiment === '积极' ? 'good' :
+                            result.sentiment === '中立' ? 'neutral' : 'bad';
+
+      resultItem.innerHTML = `
+        <h4>结果 #${index + 1} - ${result.title || '未知标题'}</h4>
+        <span class="batch-url">${result.url}</span>
+        <div>
+          <strong>发布日期：</strong>
+          <span>${result.publishDate ? new Date(result.publishDate).toLocaleString() : '未知日期'}</span>
+        </div>
+        <div>
+          <strong>股票代码：</strong>
+          <span>${result.symbol}</span>
+        </div>
+        <div>
+          <strong>公司名称：</strong>
+          <span>${result.company}</span>
+        </div>
+        <div>
+          <strong>摘要：</strong>
+          <div>${result.summary || '无摘要'}</div>
+        </div>
+        <div>
+          <strong>情感分析：</strong>
+          <span class="sentiment ${sentimentClass}">${result.sentiment || '未知'}</span>
+        </div>
+      `;
+    }
+
+    batchResultsDiv.appendChild(resultItem);
+  });
+}
+
+/**
+ * 分析文章
+ * @param {string} url - 新闻URL
+ * @param {string} symbol - 股票代码
+ * @param {string} company - 公司名称
+ * @returns {Promise<Object>} 分析结果
+ */
+async function analyzeArticle(url, symbol, company) {
+  // 调用分析API
+  const response = await fetch('/api/articles/analyze', {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({
+      url,
+      stock: { symbol, name: company }
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || '分析失败');
+  }
+
+  const data = await response.json();
+  return data;
+}
+
+/**
  * 执行新闻分析
  * @param {string} url - 新闻URL
  * @param {string} symbol - 股票代码
@@ -165,22 +403,12 @@ async function performAnalysis(url, symbol, company) {
   errorDiv.style.display = 'none';
 
   try {
-    // 调用分析API
-    const response = await fetch('/api/articles/analyze', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({
-        url,
-        stock: { symbol, name: company }
-      })
-    });
+    // 显示单个结果区域
+    document.getElementById('singleResult').style.display = 'block';
+    document.getElementById('batchResults').style.display = 'none';
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || '分析失败');
-    }
-
-    const data = await response.json();
+    // 分析文章
+    const data = await analyzeArticle(url, symbol, company);
 
     // 显示结果
     document.getElementById('articleTitle').textContent = data.title || '未知标题';

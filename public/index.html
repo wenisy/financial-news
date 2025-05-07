@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>金融新闻分析工具</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml">
   <style>
     body {
       font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
@@ -197,6 +199,40 @@
       font-size: 1.2em;
       margin-right: 5px;
     }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .checkbox-label {
+      display: inline;
+      margin-left: 8px;
+      font-weight: normal;
+    }
+    input[type="checkbox"] {
+      width: auto;
+      margin-bottom: 0;
+    }
+    .batch-item {
+      border-bottom: 1px solid #eee;
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+    .batch-item:last-child {
+      border-bottom: none;
+    }
+    .batch-item h4 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #1a73e8;
+    }
+    .batch-url {
+      font-size: 12px;
+      color: #5f6368;
+      word-break: break-all;
+      margin-bottom: 10px;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -253,8 +289,8 @@
 
         <form id="analyzeForm">
           <div>
-            <label for="newsUrl">新闻链接</label>
-            <input type="url" id="newsUrl" placeholder="https://finance.yahoo.com/news/..." required>
+            <label for="newsUrl">新闻链接 (多个链接可用逗号分隔)</label>
+            <textarea id="newsUrl" placeholder="https://finance.yahoo.com/news/...,https://finance.yahoo.com/news/..." required></textarea>
           </div>
 
           <div>
@@ -265,6 +301,11 @@
           <div>
             <label for="companyName">公司名称 (选填，AI会尝试提取)</label>
             <input type="text" id="companyName" placeholder="Apple Inc.">
+          </div>
+
+          <div class="checkbox-container">
+            <input type="checkbox" id="batchMode" checked>
+            <label for="batchMode" class="checkbox-label">批量处理模式</label>
           </div>
 
           <button type="submit" id="analyzeBtn">分析新闻</button>
@@ -291,29 +332,34 @@
 
         <div id="analyzeResult" class="result" style="display: none;">
           <h3>分析结果 <span class="emoji">📊</span></h3>
-          <div>
-            <strong>文章标题：</strong>
-            <span id="articleTitle"></span>
+          <div id="singleResult">
+            <div>
+              <strong>文章标题：</strong>
+              <span id="articleTitle"></span>
+            </div>
+            <div>
+              <strong>发布日期：</strong>
+              <span id="publishDate"></span>
+            </div>
+            <div>
+              <strong>股票代码：</strong>
+              <span id="resultSymbol"></span>
+            </div>
+            <div>
+              <strong>公司名称：</strong>
+              <span id="resultCompany"></span>
+            </div>
+            <div>
+              <strong>摘要：</strong>
+              <div id="summary"></div>
+            </div>
+            <div>
+              <strong>情感分析：</strong>
+              <span id="sentiment" class="sentiment"></span>
+            </div>
           </div>
-          <div>
-            <strong>发布日期：</strong>
-            <span id="publishDate"></span>
-          </div>
-          <div>
-            <strong>股票代码：</strong>
-            <span id="resultSymbol"></span>
-          </div>
-          <div>
-            <strong>公司名称：</strong>
-            <span id="resultCompany"></span>
-          </div>
-          <div>
-            <strong>摘要：</strong>
-            <div id="summary"></div>
-          </div>
-          <div>
-            <strong>情感分析：</strong>
-            <span id="sentiment" class="sentiment"></span>
+          <div id="batchResults" style="display: none;">
+            <!-- 批量结果将在这里动态添加 -->
           </div>
         </div>
 
