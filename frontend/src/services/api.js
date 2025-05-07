@@ -2,9 +2,7 @@ import axios from 'axios';
 
 // 创建axios实例
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? 'https://financial-news-backend.vercel.app/api' 
-    : 'http://localhost:3000/api',
+  baseURL: '/api',  // 使用相对路径，这样前后端部署在一起时不会有跨域问题
   headers: {
     'Content-Type': 'application/json'
   },
@@ -40,24 +38,24 @@ api.interceptors.response.use(
 
 // 认证相关API
 export const authAPI = {
-  login: (username, password) => 
+  login: (username, password) =>
     api.post('/auth/login', { username, password }),
-  
-  checkAuth: () => 
+
+  checkAuth: () =>
     api.get('/auth/check')
 };
 
 // 文章相关API
 export const articleAPI = {
   // 提取文章信息
-  extractArticleInfo: (url) => 
+  extractArticleInfo: (url) =>
     api.post('/articles/extract', { url }),
-  
+
   // 分析文章
-  analyzeArticle: (url, symbol, company) => 
-    api.post('/articles/analyze', { 
-      url, 
-      stock: { symbol, name: company } 
+  analyzeArticle: (url, symbol, company) =>
+    api.post('/articles/analyze', {
+      url,
+      stock: { symbol, name: company }
     })
 };
 

@@ -23,8 +23,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 静态文件服务
-app.use(express.static(path.join(__dirname, '../public')));
+// 静态文件服务 - 提供前端构建后的静态资源
+app.use(express.static(path.join(__dirname, '../../frontend/build')));
 
 // 路由
 app.use('/api/auth', authRoutes);
@@ -72,12 +72,22 @@ app.get('/api', (req, res) => {
 
 // 主页路由
 app.get('/', (req, res) => {
-  res.redirect('/index.html');
+  res.sendFile(path.join(__dirname, '../../frontend/build/index.html'));
 });
 
 // 重定向旧的测试页面到主页
 app.get('/test.html', (req, res) => {
-  res.redirect('/index.html');
+  res.redirect('/');
+});
+
+// 通配符路由 - 处理所有前端路由
+app.get('*', (req, res, next) => {
+  // 如果请求的是API路由，跳过
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  // 否则返回前端应用
+  res.sendFile(path.join(__dirname, '../../frontend/build/index.html'));
 });
 
 // 启动服务器
