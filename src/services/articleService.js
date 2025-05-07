@@ -66,6 +66,32 @@ async function analyzeArticleFromUrl(url, stock) {
 async function fetchArticleContent(url) {
   console.log(`获取文章内容: ${url}`);
 
+  // 优先使用curl方法，因为它更可靠
+  if (url.includes('finance.yahoo.com')) {
+    console.log('检测到Yahoo Finance链接，优先使用curl方法...');
+    try {
+      return await fetchWithCurl(url);
+    } catch (curlError) {
+      console.error('curl方法失败，尝试使用Yahoo Finance API:', curlError);
+      try {
+        return await fetchYahooFinanceContent(url);
+      } catch (apiError) {
+        console.error('Yahoo Finance API方法也失败，尝试使用Axios:', apiError);
+        // 如果两种方法都失败，尝试使用Axios
+      }
+    }
+  } else {
+    // 对于非Yahoo Finance链接，也优先使用curl
+    console.log('优先使用curl方法...');
+    try {
+      return await fetchWithCurl(url);
+    } catch (curlError) {
+      console.error('curl方法失败，尝试使用Axios:', curlError);
+      // 如果curl失败，尝试使用Axios
+    }
+  }
+
+  // 如果上述方法都失败，或者不是Yahoo Finance链接，使用Axios
   try {
     // 创建自定义的HTTP/HTTPS代理，增加超时和头部大小限制
     const httpAgent = new http.Agent({
@@ -98,7 +124,7 @@ async function fetchArticleContent(url) {
     };
 
     // 发送请求
-    console.log('正在加载页面...');
+    console.log('正在使用Axios加载页面...');
     const response = await axios.get(url, {
       headers,
       httpAgent,
@@ -233,22 +259,10 @@ async function fetchArticleContent(url) {
       source
     };
   } catch (error) {
-    console.error('获取文章内容失败:', error);
+    console.error('Axios获取文章内容失败:', error);
 
-    // 如果是Yahoo Finance，尝试使用备用方法
-    if (url.includes('finance.yahoo.com')) {
-      console.log('尝试使用备用方法获取Yahoo Finance内容...');
-      try {
-        return await fetchYahooFinanceContent(url);
-      } catch (apiError) {
-        console.error('API备用方法失败:', apiError);
-        console.log('尝试使用curl作为最后的备选方案...');
-        return fetchWithCurl(url);
-      }
-    }
-
-    // 对于其他网站，尝试使用curl
-    console.log('尝试使用curl作为备选方案...');
+    // 如果Axios方法失败，再次尝试使用curl作为最后的备选方案
+    console.log('Axios方法失败，再次尝试使用curl作为最后的备选方案...');
     return fetchWithCurl(url);
   }
 }
