@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // 创建axios实例
 const api = axios.create({
-  baseURL: '/api',  // 使用相对路径，这样前后端部署在一起时不会有跨域问题
+  baseURL: process.env.REACT_APP_API_URL || '/api',  // 优先使用环境变量中的API URL
   headers: {
     'Content-Type': 'application/json'
   },

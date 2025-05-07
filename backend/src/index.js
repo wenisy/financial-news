@@ -45,12 +45,20 @@ app.use(cors({
 // 静态文件服务 - 提供前端构建后的静态资源
 const frontendBuildPath = path.join(__dirname, '../../frontend/build');
 console.log('前端构建路径:', frontendBuildPath);
-app.use(express.static(frontendBuildPath));
+app.use(express.static(frontendBuildPath, {
+  maxAge: '1d', // 缓存1天
+  etag: true,
+  lastModified: true
+}));
 
 // 如果前端构建目录不存在，尝试使用public目录
 const publicPath = path.join(__dirname, '../public');
 console.log('后端public路径:', publicPath);
-app.use(express.static(publicPath));
+app.use(express.static(publicPath, {
+  maxAge: '1d', // 缓存1天
+  etag: true,
+  lastModified: true
+}));
 
 // 路由
 app.use('/api/auth', authRoutes);
@@ -110,6 +118,11 @@ app.get('/test.html', (req, res) => {
 app.get('*', (req, res, next) => {
   // 如果请求的是API路由，跳过
   if (req.path.startsWith('/api')) {
+    return next();
+  }
+
+  // 如果请求的是静态资源，跳过
+  if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
     return next();
   }
 
