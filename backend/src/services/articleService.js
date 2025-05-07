@@ -494,5 +494,6 @@ async function fetchWithCurl(url) {
 
 module.exports = {
   analyzeArticleFromUrl,
-  fetchArticleContent
+  fetchArticleContent,
+  fetchWithCurl
 };
