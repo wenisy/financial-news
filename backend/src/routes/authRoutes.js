@@ -5,6 +5,7 @@
 
 const express = require('express');
 const { login, createUser } = require('../services/userService');
+const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -52,6 +53,26 @@ router.post('/login', async (req, res) => {
  */
 router.post('/register', async (req, res) => {
   return res.status(403).json({ message: '注册功能已禁用，请联系管理员获取账号' });
+});
+
+/**
+ * 检查认证状态
+ * GET /api/auth/check
+ */
+router.get('/check', verifyToken, (req, res) => {
+  try {
+    // 如果能到达这里，说明token有效
+    return res.status(200).json({
+      message: '认证有效',
+      user: {
+        username: req.user.username,
+        userId: req.user.userId
+      }
+    });
+  } catch (error) {
+    console.error('检查认证状态失败:', error);
+    return res.status(500).json({ message: '服务器内部错误' });
+  }
 });
 
 module.exports = router;

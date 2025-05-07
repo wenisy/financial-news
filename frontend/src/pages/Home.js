@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import { articleAPI } from '../services/api';
 import '../styles/Home.css';

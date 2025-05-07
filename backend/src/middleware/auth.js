@@ -59,7 +59,7 @@ function verifyToken(req, res, next) {
  * @param {string} expiresIn - 过期时间
  * @returns {string} JWT令牌
  */
-function generateToken(user, expiresIn = '24h') {
+function generateToken(user, expiresIn = '7d') {  // 将过期时间延长到7天
   return jwt.sign(
     {
       username: user.username,
