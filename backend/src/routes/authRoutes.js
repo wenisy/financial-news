@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
       res.cookie('auth_token', result.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // 在生产环境中使用secure
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 跨站请求时使用none
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7天过期
         path: '/'
       });
@@ -94,7 +94,7 @@ router.post('/logout', (req, res) => {
     res.clearCookie('auth_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/'
     });
 

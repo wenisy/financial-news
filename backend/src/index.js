@@ -20,7 +20,23 @@ app.use(cookieParser()); // 添加cookie解析中间件
 
 // 启用CORS
 app.use(cors({
-  origin: ['https://financial-news-tan.vercel.app', 'https://financial-news-frontend.vercel.app', 'http://localhost:3000'],
+  origin: function(origin, callback) {
+    // 允许的域名列表
+    const allowedOrigins = [
+      'https://financial-news-tan.vercel.app',
+      'https://financial-news-frontend.vercel.app',
+      'http://localhost:3000'
+    ];
+
+    // 允许没有origin的请求（如移动应用或curl请求）
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('不允许的来源'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

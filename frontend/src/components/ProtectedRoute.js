@@ -12,7 +12,8 @@ const ProtectedRoute = ({ children }) => {
 
   // 如果未登录，重定向到登录页
   if (!user) {
-    return <Navigate to="/login" />;
+    // 使用state属性，传递当前路径，避免循环重定向
+    return <Navigate to="/login" state={{ from: window.location.pathname }} replace />;
   }
 
   // 已登录，显示子组件

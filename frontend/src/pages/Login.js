@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
 import '../styles/Login.css';
 
@@ -7,13 +7,18 @@ const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, error } = useAuth();
+  const { login, error, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // 如果用户已登录，重定向到主页
+  if (user && !authLoading) {
+    return <Navigate to="/" />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const success = await login(username, password);
       if (success) {
@@ -29,9 +34,9 @@ const Login = () => {
       <div className="login-card">
         <h2>金融新闻分析工具</h2>
         <h3>登录</h3>
-        
+
         {error && <div className="error-message">{error}</div>}
-        
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="username">用户名</label>
@@ -43,7 +48,7 @@ const Login = () => {
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label htmlFor="password">密码</label>
             <input
@@ -54,9 +59,9 @@ const Login = () => {
               required
             />
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="login-button"
             disabled={loading}
           >

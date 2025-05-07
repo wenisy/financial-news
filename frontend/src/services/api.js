@@ -13,8 +13,9 @@ const api = axios.create({
 api.interceptors.response.use(
   response => response,
   error => {
-    // 如果是401错误（未授权），重定向到登录页
-    if (error.response && error.response.status === 401) {
+    // 如果是401错误（未授权），且不是认证检查接口，重定向到登录页
+    if (error.response && error.response.status === 401 &&
+        !error.config.url.includes('/auth/check')) {
       window.location.href = '/login';
     }
     return Promise.reject(error);

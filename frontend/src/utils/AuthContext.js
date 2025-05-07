@@ -19,13 +19,16 @@ export const AuthProvider = ({ children }) => {
         setUser(response.data.user);
       } catch (err) {
         console.error('认证检查失败:', err);
-        // 认证失败，不需要做任何事情，用户状态将保持为null
+        // 认证失败，清除用户状态
+        setUser(null);
       } finally {
         setLoading(false);
       }
     };
 
-    checkAuth();
+    // 设置一个短暂的延迟，避免可能的请求风暴
+    const timer = setTimeout(checkAuth, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   // 登录函数
