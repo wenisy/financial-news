@@ -10,7 +10,8 @@
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
     "build": "node build.js",
-    "start": "cd backend && npm start"
+    "start": "cd backend && npm start",
+    "vercel-build": "node build.js"
   },
   "keywords": [
     "finance",

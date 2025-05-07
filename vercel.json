@@ -11,5 +11,7 @@
       "src": "/(.*)",
       "dest": "backend/src/index.js"
     }
-  ]
+  ],
+  "buildCommand": "node build.js",
+  "outputDirectory": "backend"
 }
