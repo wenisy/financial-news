@@ -1,33 +1,48 @@
 # 金融新闻分析工具
 
-这是一个自动化工具，用于抓取金融新闻，使用 AI 进行分析，并将结果存储到 Notion 数据库中。项目分为两部分：
+一个用于分析金融新闻的工具，使用 AI 提取关键信息并存储到 Notion 数据库。项目采用前后端分离架构：
 
-1. Node.js API 服务（部署在 Vercel）
-2. 爬虫和分析逻辑（运行在 GitHub Actions）
+1. React 前端应用（部署在 Vercel）
+2. Node.js 后端 API（部署在 Vercel）
+3. 爬虫和分析逻辑（运行在 GitHub Actions）
 
 ## 功能特点
 
-- 支持多个股票符号和新闻源的配置
-- 自动抓取指定新闻源的相关新闻
-- 使用 AI 对新闻内容进行分析和总结
+- 用户认证和授权
+- 从新闻链接中提取文章内容
+- 使用 AI 分析文章内容，提取股票代码和公司名称
+- 生成文章摘要和情感分析
 - 将分析结果存储到 Notion 数据库
-- 通过 GitHub Actions 自动化运行
-- 提供 API 接口触发分析和管理配置
+- 支持批量处理多个新闻链接
+- 表格形式展示批量处理结果
+- 通过 GitHub Actions 自动抓取 Yahoo Finance 新闻
 
 ## 项目结构
 
 ```
 financial-news/
 ├── .github/workflows/    # GitHub Actions工作流配置
-├── src/
-│   ├── controllers/      # 控制器
-│   ├── routes/           # API路由
-│   ├── services/         # 服务（爬虫、AI、Notion）
-│   ├── scripts/          # GitHub Actions运行脚本
-│   └── index.js          # API入口文件
-├── config.json           # 股票和新闻源配置
-├── package.json          # Node.js依赖
-└── vercel.json           # Vercel部署配置
+├── frontend/             # React前端应用
+│   ├── public/           # 静态资源
+│   ├── src/              # 源代码
+│   │   ├── components/   # React组件
+│   │   ├── pages/        # 页面组件
+│   │   ├── services/     # API服务
+│   │   ├── styles/       # CSS样式
+│   │   ├── utils/        # 工具函数
+│   │   └── App.js        # 应用入口
+│   ├── package.json      # 前端依赖
+│   └── vercel.json       # 前端Vercel配置
+├── backend/              # Node.js后端API
+│   ├── src/
+│   │   ├── controllers/  # 控制器
+│   │   ├── routes/       # API路由
+│   │   ├── services/     # 服务（爬虫、AI、Notion）
+│   │   ├── scripts/      # GitHub Actions运行脚本
+│   │   └── index.js      # API入口文件
+│   ├── package.json      # 后端依赖
+│   └── vercel.json       # 后端Vercel配置
+└── package.json          # 根目录依赖和脚本
 ```
 
 ## 配置说明
@@ -89,16 +104,33 @@ GitHub Actions 工作流配置已包含在项目中，需要在仓库的 Secrets
 
 ## 本地开发
 
-1. 克隆仓库
-2. 安装依赖：
-   ```
-   npm install
-   ```
-3. 创建`.env`文件并设置环境变量（参考`.env.example`）
-4. 启动开发服务器：
-   ```
-   npm run dev
-   ```
+### 安装依赖
+
+```bash
+# 安装所有依赖（根目录、前端和后端）
+npm run install:all
+```
+
+### 运行开发服务器
+
+```bash
+# 同时运行前端和后端
+npm run dev
+
+# 或者分别运行
+npm run start:frontend
+npm run start:backend
+```
+
+### 构建项目
+
+```bash
+# 构建前端
+npm run build:frontend
+
+# 构建后端
+npm run build:backend
+```
 
 ## AI 配置
 

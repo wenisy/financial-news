@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
 const { runAnalysis } = require('./controllers/analysisController');
 const configRoutes = require('./routes/configRoutes');
 const testRoutes = require('./routes/testRoutes');
@@ -14,14 +13,6 @@ const PORT = process.env.PORT || 3000;
 
 // 中间件
 app.use(express.json());
-
-// 启用CORS
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://financial-news-tan.vercel.app', 'https://financial-news-frontend.vercel.app']
-    : 'http://localhost:3000',
-  credentials: true
-}));
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '../public')));
@@ -59,6 +50,15 @@ app.post('/api/analyze', verifyToken, async (req, res) => {
 // 健康检查端点
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
+});
+
+// API根路径
+app.get('/api', (req, res) => {
+  res.json({
+    message: '金融新闻分析工具API',
+    version: '1.0.0',
+    status: 'running'
+  });
 });
 
 // 主页路由
