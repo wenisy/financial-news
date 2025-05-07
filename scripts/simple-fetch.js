@@ -1,14 +1,15 @@
 /**
  * 简单文章内容获取工具
- * 
+ *
  * 使用axios获取文章内容
- * 
+ *
  * 使用方法:
  * node scripts/simple-fetch.js <文章URL>
  */
 
 const axios = require('axios');
 const cheerio = require('cheerio');
+const https = require('https');
 
 // 从命令行获取URL
 const url = process.argv[2];
@@ -25,7 +26,7 @@ if (!url) {
  */
 async function fetchContent(url) {
   console.log(`正在获取文章: ${url}`);
-  
+
   try {
     // 设置请求头，模拟浏览器
     const headers = {
@@ -36,21 +37,33 @@ async function fetchContent(url) {
       'Upgrade-Insecure-Requests': '1',
       'Cache-Control': 'max-age=0'
     };
-    
+
+    // 创建自定义的 HTTP/HTTPS 代理，增加最大响应头大小
+    const httpsAgent = new https.Agent({
+      maxHeaderSize: 16384 * 10, // 增加最大响应头大小
+      keepAlive: true
+    });
+
     // 发送请求
     console.log('正在加载页面...');
-    const response = await axios.get(url, { headers });
-    
+    const response = await axios.get(url, {
+      headers,
+      httpsAgent,
+      maxContentLength: Infinity, // 不限制内容长度
+      maxBodyLength: Infinity,    // 不限制请求体长度
+      timeout: 30000              // 30秒超时
+    });
+
     // 使用cheerio解析HTML
     const $ = cheerio.load(response.data);
-    
+
     // 获取页面标题
     const title = $('title').text().trim();
     console.log(`页面标题: ${title}`);
-    
+
     // 获取文章内容
     console.log('提取文章内容...');
-    
+
     // 尝试多种可能的文章内容选择器
     const selectors = [
       'article',
@@ -64,10 +77,10 @@ async function fetchContent(url) {
       '.content',
       'main'
     ];
-    
+
     let articleElement = null;
     let selectorUsed = 'body'; // 默认
-    
+
     // 尝试找到文章内容元素
     for (const selector of selectors) {
       if ($(selector).length) {
@@ -76,31 +89,31 @@ async function fetchContent(url) {
         break;
       }
     }
-    
+
     // 如果找不到特定元素，使用body
     if (!articleElement) {
       articleElement = $('body');
     }
-    
+
     // 获取所有段落
     const paragraphs = articleElement.find('p');
-    
+
     // 过滤掉太短的段落和可能的广告/导航
     const contentParagraphs = [];
     paragraphs.each((_, p) => {
       const text = $(p).text().trim();
-      if (text.length > 20 && 
-          !$(p).parents('nav').length && 
-          !$(p).parents('header').length && 
+      if (text.length > 20 &&
+          !$(p).parents('nav').length &&
+          !$(p).parents('header').length &&
           !$(p).parents('footer').length &&
           !$(p).parents('.ad').length &&
           !$(p).parents('.advertisement').length) {
         contentParagraphs.push(text);
       }
     });
-    
+
     const content = contentParagraphs.join('\n\n');
-    
+
     // 输出结果
     console.log('\n=== 文章内容 ===');
     console.log(`使用选择器: ${selectorUsed}`);
@@ -110,13 +123,22 @@ async function fetchContent(url) {
     console.log('\n--- 完整内容 ---');
     console.log(content);
     console.log('\n=== 结束 ===');
-    
+
   } catch (error) {
     console.error('获取文章内容失败:', error.message);
     if (error.response) {
       console.error('状态码:', error.response.status);
-      console.error('响应头:', error.response.headers);
+      console.error('响应头:', JSON.stringify(error.response.headers, null, 2));
+    } else if (error.request) {
+      console.error('请求发送但未收到响应');
+      console.error('请求详情:', error.request._currentUrl || error.request.path);
+    } else {
+      console.error('请求配置错误:', error.config);
     }
+
+    // 尝试使用puppeteer作为备选方案
+    console.log('\n尝试使用puppeteer作为备选方案...');
+    console.log('请运行: node scripts/fetch-content.js ' + url);
   }
 }
 

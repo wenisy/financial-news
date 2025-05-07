@@ -5,6 +5,8 @@ const { runAnalysis } = require('./controllers/analysisController');
 const configRoutes = require('./routes/configRoutes');
 const testRoutes = require('./routes/testRoutes');
 const articleRoutes = require('./routes/articleRoutes');
+const authRoutes = require('./routes/authRoutes');
+const { verifyToken } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +18,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // 路由
+app.use('/api/auth', authRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api', testRoutes);
 app.use('/api/articles', articleRoutes);
@@ -49,7 +52,7 @@ app.get('/health', (req, res) => {
 
 // 主页路由
 app.get('/', (req, res) => {
-  res.redirect('/test.html');
+  res.redirect('/index.html');
 });
 
 // 启动服务器
