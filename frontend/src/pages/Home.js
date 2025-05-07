@@ -35,6 +35,41 @@ const Home = () => {
     const newRows = [...inputRows];
     newRows[index][field] = value;
     setInputRows(newRows);
+
+    // 当URL字段更新且不为空时，尝试自动提取股票信息
+    if (field === 'url' && value.trim()) {
+      // 防抖：如果用户正在输入，等待一段时间再提取
+      const debounceTime = 1000; // 1秒
+
+      // 清除之前的定时器
+      if (window.extractTimer) {
+        clearTimeout(window.extractTimer);
+      }
+
+      // 设置新的定时器
+      window.extractTimer = setTimeout(async () => {
+        try {
+          console.log(`尝试自动提取股票信息: ${value}`);
+
+          // 只有当symbol和company都为空时才提取
+          if (!newRows[index].symbol && !newRows[index].company) {
+            setLoading(true);
+            const response = await articleAPI.extractArticleInfo(value);
+
+            // 更新行数据
+            const updatedRows = [...inputRows];
+            updatedRows[index].symbol = response.data.symbol || 'Market';
+            updatedRows[index].company = response.data.company || 'Market';
+            setInputRows(updatedRows);
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error('自动提取失败:', err);
+          // 提取失败时不显示错误，静默失败
+          setLoading(false);
+        }
+      }, debounceTime);
+    }
   };
 
   // 打开批量输入弹窗
