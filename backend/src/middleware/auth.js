@@ -25,11 +25,13 @@ if (!process.env.JWT_SECRET) {
 function verifyToken(req, res, next) {
   console.log('验证令牌...');
 
-  // 从请求头或查询参数中获取令牌
+  // 从cookie、请求头或查询参数中获取令牌
+  const cookieToken = req.cookies?.auth_token;
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
-  const token = req.query?.token || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader);
+  const token = cookieToken || req.query?.token || (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader);
 
   console.log('请求头:', req.headers);
+  console.log('Cookie中的令牌:', cookieToken ? cookieToken.substring(0, 10) + '...' : 'null');
   console.log('获取到的令牌:', token ? token.substring(0, 10) + '...' : 'null');
 
   if (!token) {

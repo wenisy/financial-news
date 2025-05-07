@@ -31,10 +31,19 @@ router.post('/login', async (req, res) => {
     console.log('登录结果:', JSON.stringify(result, null, 2));
 
     if (result.success) {
-      console.log('登录成功, 返回令牌');
+      console.log('登录成功, 设置令牌到cookie');
+
+      // 设置HttpOnly cookie
+      res.cookie('auth_token', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // 在生产环境中使用secure
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7天过期
+        path: '/'
+      });
+
       return res.status(200).json({
         message: result.message,
-        token: result.token,
         user: result.user
       });
     } else {
@@ -71,6 +80,27 @@ router.get('/check', verifyToken, (req, res) => {
     });
   } catch (error) {
     console.error('检查认证状态失败:', error);
+    return res.status(500).json({ message: '服务器内部错误' });
+  }
+});
+
+/**
+ * 用户登出
+ * POST /api/auth/logout
+ */
+router.post('/logout', (req, res) => {
+  try {
+    // 清除认证cookie
+    res.clearCookie('auth_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/'
+    });
+
+    return res.status(200).json({ message: '登出成功' });
+  } catch (error) {
+    console.error('登出失败:', error);
     return res.status(500).json({ message: '服务器内部错误' });
   }
 });

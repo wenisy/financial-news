@@ -3,6 +3,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const { runAnalysis } = require('./controllers/analysisController');
 const configRoutes = require('./routes/configRoutes');
 const testRoutes = require('./routes/testRoutes');
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 
 // 中间件
 app.use(express.json());
+app.use(cookieParser()); // 添加cookie解析中间件
 
 // 启用CORS
 app.use(cors({

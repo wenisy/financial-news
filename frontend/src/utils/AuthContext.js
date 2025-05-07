@@ -14,19 +14,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // 检查localStorage中是否有token
-        const token = localStorage.getItem('token');
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-
-        // 验证token
+        // 验证认证状态（通过cookie）
         const response = await authAPI.checkAuth();
         setUser(response.data.user);
       } catch (err) {
         console.error('认证检查失败:', err);
-        localStorage.removeItem('token');
+        // 认证失败，不需要做任何事情，用户状态将保持为null
       } finally {
         setLoading(false);
       }
@@ -40,10 +33,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setError(null);
       const response = await authAPI.login(username, password);
-      const { token, user: userData } = response.data;
-      
-      // 保存token到localStorage
-      localStorage.setItem('token', token);
+      const { user: userData } = response.data;
+
+      // token已经通过cookie设置，不需要手动保存
       setUser(userData);
       return true;
     } catch (err) {
@@ -54,9 +46,18 @@ export const AuthProvider = ({ children }) => {
   };
 
   // 登出函数
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      // 调用登出API，清除服务器端的cookie
+      await authAPI.logout();
+
+      // 清除前端状态
+      setUser(null);
+    } catch (err) {
+      console.error('登出失败:', err);
+      // 即使API调用失败，也清除前端状态
+      setUser(null);
+    }
   };
 
   // 提供认证上下文
