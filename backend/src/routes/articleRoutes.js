@@ -160,6 +160,16 @@ router.post('/extract', async (req, res) => {
     // 这里我们直接调用fetchWithCurl而不是fetchArticleContent，以确保使用curl方法
     const article = await fetchWithCurl(url);
 
+    // 检查是否成功获取标题
+    if (article.title === '无法获取标题') {
+      console.log(`无法获取文章标题: ${url}`);
+      return res.status(400).json({
+        success: false,
+        message: '无法获取文章标题',
+        error: '无法从URL中提取有效内容'
+      });
+    }
+
     // 使用AI提取股票代码和公司名称
     const extractedInfo = await extractStockInfo(article.content, article.title);
 

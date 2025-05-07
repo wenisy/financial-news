@@ -34,6 +34,12 @@ async function analyzeArticleFromUrl(url, stock) {
     // 获取文章内容
     const article = await fetchArticleContent(url);
 
+    // 检查是否成功获取标题
+    if (article.title === '无法获取标题') {
+      console.log(`无法获取文章标题，跳过分析: ${url}`);
+      return { skipped: true, reason: 'title_not_found' };
+    }
+
     // 分析文章
     const analysis = await analyzeNews(article.content, stock);
 
@@ -347,10 +353,12 @@ async function fetchWithCurl(url) {
   try {
     // 创建临时文件路径
     const tempFile = path.join(__dirname, '../../temp_content.html');
+    console.log(`临时文件路径: ${tempFile}`);
 
     // 构建curl命令
     const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     const curlCommand = `curl -s -A "${userAgent}" -L "${url}" -o "${tempFile}"`;
+    console.log(`执行的curl命令: ${curlCommand}`);
 
     console.log('执行curl命令...');
 
@@ -358,60 +366,92 @@ async function fetchWithCurl(url) {
     await new Promise((resolve, reject) => {
       exec(curlCommand, (error, stdout, stderr) => {
         if (error) {
+          console.error('curl命令执行失败:', error);
           reject(error);
           return;
+        }
+        if (stderr) {
+          console.log('curl stderr:', stderr);
         }
         resolve(stdout);
       });
     });
 
+    // 检查文件是否存在
+    try {
+      await fs.access(tempFile);
+      console.log('临时文件创建成功');
+    } catch (err) {
+      console.error('临时文件不存在:', err);
+      throw new Error('临时文件创建失败');
+    }
+
     // 读取下载的文件
     console.log('读取下载的内容...');
     const htmlContent = await fs.readFile(tempFile, 'utf8');
+    console.log(`获取到HTML内容，长度: ${htmlContent.length} 字符`);
 
     // 使用cheerio解析HTML
     const $ = cheerio.load(htmlContent);
 
     // 获取页面标题
     const title = $('title').text().trim() || $('h1').first().text().trim();
+    console.log(`提取到的标题: ${title || '未找到标题'}`);
 
     // 获取发布日期
     let publishDate = '';
     const timeElement = $('time').first();
     if (timeElement.length) {
       publishDate = timeElement.attr('datetime') || timeElement.text().trim();
+      console.log(`找到时间元素: ${publishDate}`);
+    } else {
+      console.log('未找到时间元素');
     }
 
     // 如果找不到日期，使用当前日期
     if (!publishDate) {
       publishDate = new Date().toISOString();
+      console.log(`使用当前日期: ${publishDate}`);
     }
 
     // 获取文章内容
     let content = '';
+    console.log('开始提取文章内容...');
 
     // 针对Yahoo Finance的特定选择器
     if (url.includes('finance.yahoo.com')) {
+      console.log('检测到Yahoo Finance链接，使用特定选择器');
+
       // 尝试视频描述
       const videoDescription = $('.caas-description').text().trim();
       if (videoDescription) {
+        console.log('找到视频描述');
         content += videoDescription + '\n\n';
+      } else {
+        console.log('未找到视频描述');
       }
 
       // 尝试文章正文
       const articleBody = $('.caas-body');
       if (articleBody.length) {
+        console.log('找到文章正文元素');
+        let paragraphCount = 0;
         articleBody.find('p').each((_, p) => {
           const text = $(p).text().trim();
           if (text.length > 20) {
             content += text + '\n\n';
+            paragraphCount++;
           }
         });
+        console.log(`从文章正文中提取了 ${paragraphCount} 个段落`);
+      } else {
+        console.log('未找到文章正文元素');
       }
     }
 
     // 如果上面的方法没有找到内容，尝试通用选择器
     if (!content) {
+      console.log('使用通用选择器提取内容');
       // 尝试多种可能的文章内容选择器
       const selectors = [
         'article',
@@ -427,11 +467,14 @@ async function fetchWithCurl(url) {
       ];
 
       let articleElement = null;
+      let usedSelector = '';
 
       // 尝试找到文章内容元素
       for (const selector of selectors) {
         if ($(selector).length) {
           articleElement = $(selector);
+          usedSelector = selector;
+          console.log(`找到内容元素: ${selector}`);
           break;
         }
       }
@@ -439,9 +482,11 @@ async function fetchWithCurl(url) {
       // 如果找不到特定元素，使用body
       if (!articleElement) {
         articleElement = $('body');
+        console.log('未找到特定内容元素，使用body');
       }
 
       // 获取所有段落
+      let paragraphCount = 0;
       articleElement.find('p').each((_, p) => {
         const text = $(p).text().trim();
         // 过滤掉太短的段落和可能的广告/导航
@@ -452,25 +497,38 @@ async function fetchWithCurl(url) {
             !$(p).parents('.ad').length &&
             !$(p).parents('.advertisement').length) {
           content += text + '\n\n';
+          paragraphCount++;
         }
       });
+      console.log(`从${usedSelector || 'body'}中提取了 ${paragraphCount} 个段落`);
     }
 
     // 如果仍然没有内容，尝试获取所有文本
     if (!content) {
+      console.log('未找到结构化内容，提取所有文本');
       content = $('body').text().replace(/\s+/g, ' ').trim();
+    }
+
+    console.log(`提取的内容长度: ${content.length} 字符`);
+    if (content.length > 0) {
+      console.log(`内容预览: ${content.substring(0, 100)}...`);
+    } else {
+      console.log('警告: 提取的内容为空');
     }
 
     // 获取网站域名作为来源
     const source = new URL(url).hostname;
+    console.log(`文章来源: ${source}`);
 
     // 清理临时文件
     try {
       await fs.unlink(tempFile);
+      console.log('临时文件已清理');
     } catch (unlinkError) {
       console.error('清理临时文件失败:', unlinkError);
     }
 
+    console.log('文章内容提取完成，返回结果');
     return {
       title,
       url,
@@ -482,6 +540,7 @@ async function fetchWithCurl(url) {
     console.error('使用curl获取内容失败:', error);
 
     // 如果curl方法也失败，返回一个基本对象
+    console.log('返回默认内容');
     return {
       title: '无法获取标题',
       url,
