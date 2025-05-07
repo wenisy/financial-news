@@ -5,7 +5,7 @@
  */
 
 const express = require('express');
-const { analyzeArticleFromUrl, fetchArticleContent } = require('../services/articleService');
+const { analyzeArticleFromUrl, fetchArticleContent, fetchWithCurl } = require('../services/articleService');
 const { verifyToken } = require('../middleware/auth');
 const { extractStockInfo } = require('../services/aiService');
 
@@ -156,8 +156,9 @@ router.post('/extract', async (req, res) => {
 
     console.log(`从文章中提取信息: ${url}`);
 
-    // 获取文章内容
-    const article = await fetchArticleContent(url);
+    // 直接使用curl方法获取文章内容
+    // 这里我们直接调用fetchWithCurl而不是fetchArticleContent，以确保使用curl方法
+    const article = await fetchWithCurl(url);
 
     // 使用AI提取股票代码和公司名称
     const extractedInfo = await extractStockInfo(article.content, article.title);
@@ -166,6 +167,7 @@ router.post('/extract', async (req, res) => {
     res.status(200).json({
       success: true,
       message: '信息提取完成',
+      title: article.title,
       symbol: extractedInfo.symbol,
       company: extractedInfo.company
     });

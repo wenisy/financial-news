@@ -112,6 +112,19 @@ function setupAppListeners() {
   document.getElementById('cancelExtract').addEventListener('click', () => {
     document.getElementById('extractResult').style.display = 'none';
   });
+
+  // 绑定模态框关闭按钮
+  document.querySelector('.close-modal').addEventListener('click', () => {
+    document.getElementById('summaryModal').style.display = 'none';
+  });
+
+  // 点击模态框外部关闭
+  window.addEventListener('click', (event) => {
+    const modal = document.getElementById('summaryModal');
+    if (event.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
 }
 
 /**
@@ -321,68 +334,119 @@ async function processBatchUrls(urls, symbol, name, analyzeBtn, analyzeResultDiv
  */
 function updateBatchResultsDisplay() {
   const batchResultsDiv = document.getElementById('batchResults');
-  batchResultsDiv.innerHTML = '';
+  const batchResultsBody = document.getElementById('batchResultsBody');
+  batchResultsBody.innerHTML = '';
 
-  // 为每个结果创建HTML
+  // 为每个结果创建表格行
   batchResults.forEach((result, index) => {
-    const resultItem = document.createElement('div');
-    resultItem.className = 'batch-item';
+    const row = document.createElement('tr');
 
     if (result.error) {
       // 显示错误结果
-      resultItem.innerHTML = `
-        <h4>结果 #${index + 1} - 处理失败</h4>
-        <span class="batch-url">${result.url}</span>
-        <div class="error">${result.error}</div>
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td colspan="5" class="error">
+          <div>${result.url}</div>
+          <div>错误: ${result.error}</div>
+        </td>
+        <td>
+          <button class="action-btn" onclick="retryAnalysis(${index})">重试</button>
+        </td>
       `;
     } else if (result.skipped) {
       // 显示跳过结果
-      resultItem.innerHTML = `
-        <h4>结果 #${index + 1} - 已跳过</h4>
-        <span class="batch-url">${result.url}</span>
-        <div>
-          <strong>股票代码：</strong>
-          <span>${result.symbol}</span>
-        </div>
-        <div>
-          <strong>公司名称：</strong>
-          <span>${result.company}</span>
-        </div>
-        <div class="success">${result.reason}</div>
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td class="title-cell" title="${result.url}">${result.url}</td>
+        <td>${result.symbol || 'N/A'}</td>
+        <td>${result.company || 'N/A'}</td>
+        <td>N/A</td>
+        <td class="success">${result.reason}</td>
+        <td>
+          <button class="action-btn" onclick="forceAnalysis(${index})">强制分析</button>
+        </td>
       `;
     } else {
       // 显示成功结果
       const sentimentClass = result.sentiment === '好' || result.sentiment === '积极' ? 'good' :
                             result.sentiment === '中立' ? 'neutral' : 'bad';
 
-      resultItem.innerHTML = `
-        <h4>结果 #${index + 1} - ${result.title || '未知标题'}</h4>
-        <span class="batch-url">${result.url}</span>
-        <div>
-          <strong>发布日期：</strong>
-          <span>${result.publishDate ? new Date(result.publishDate).toLocaleString() : '未知日期'}</span>
-        </div>
-        <div>
-          <strong>股票代码：</strong>
-          <span>${result.symbol}</span>
-        </div>
-        <div>
-          <strong>公司名称：</strong>
-          <span>${result.company}</span>
-        </div>
-        <div>
-          <strong>摘要：</strong>
-          <div>${result.summary || '无摘要'}</div>
-        </div>
-        <div>
-          <strong>情感分析：</strong>
-          <span class="sentiment ${sentimentClass}">${result.sentiment || '未知'}</span>
-        </div>
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td class="title-cell" title="${result.title || '未知标题'}">${result.title || '未知标题'}</td>
+        <td>${result.symbol}</td>
+        <td>${result.company}</td>
+        <td>${result.publishDate ? new Date(result.publishDate).toLocaleString() : '未知日期'}</td>
+        <td><span class="sentiment ${sentimentClass}">${result.sentiment || '未知'}</span></td>
+        <td>
+          <button class="view-summary-btn" onclick="viewSummary(${index})">查看摘要</button>
+        </td>
       `;
     }
 
-    batchResultsDiv.appendChild(resultItem);
+    batchResultsBody.appendChild(row);
   });
+
+  // 显示批量结果区域
+  batchResultsDiv.style.display = 'block';
+}
+
+/**
+ * 查看摘要
+ * @param {number} index 结果索引
+ */
+function viewSummary(index) {
+  const result = batchResults[index];
+  if (!result) return;
+
+  // 填充模态框内容
+  document.getElementById('modalTitle').textContent = result.title || '未知标题';
+  document.getElementById('modalSymbol').textContent = result.symbol;
+  document.getElementById('modalCompany').textContent = result.company;
+  document.getElementById('modalSummary').textContent = result.summary || '无摘要';
+
+  // 显示模态框
+  document.getElementById('summaryModal').style.display = 'block';
+}
+
+/**
+ * 重试分析
+ * @param {number} index 结果索引
+ */
+function retryAnalysis(index) {
+  const result = batchResults[index];
+  if (!result) return;
+
+  // 获取URL和其他信息
+  const url = result.url;
+
+  // 重新提取和分析
+  processSingleUrl(
+    url,
+    '',
+    '',
+    document.getElementById('analyzeBtn'),
+    document.getElementById('extractResult'),
+    document.getElementById('analyzeResult'),
+    document.getElementById('analyzeError')
+  );
+}
+
+/**
+ * 强制分析
+ * @param {number} index 结果索引
+ */
+function forceAnalysis(index) {
+  const result = batchResults[index];
+  if (!result) return;
+
+  // 获取URL和其他信息
+  const url = result.url;
+  const symbol = result.symbol || 'Market';
+  const company = result.company || 'Market';
+
+  // 直接分析，跳过检查
+  performAnalysis(url, symbol, company);
 }
 
 /**

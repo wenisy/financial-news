@@ -233,6 +233,70 @@
       margin-bottom: 10px;
       display: block;
     }
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .results-table th,
+    .results-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .results-table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #5f6368;
+    }
+    .results-table tr:hover {
+      background-color: #f1f3f4;
+    }
+    .results-table .title-cell {
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .results-table .action-btn {
+      padding: 5px 10px;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    .view-summary-btn {
+      color: #1a73e8;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 0;
+    }
+    .summary-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    .summary-modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 700px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .close-modal {
+      float: right;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -359,11 +423,46 @@
             </div>
           </div>
           <div id="batchResults" style="display: none;">
-            <!-- 批量结果将在这里动态添加 -->
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>标题</th>
+                  <th>股票代码</th>
+                  <th>公司名称</th>
+                  <th>发布日期</th>
+                  <th>情感分析</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="batchResultsBody">
+                <!-- 批量结果将在这里动态添加 -->
+              </tbody>
+            </table>
           </div>
         </div>
 
         <div id="analyzeError" class="error" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 摘要模态框 -->
+  <div id="summaryModal" class="summary-modal">
+    <div class="summary-modal-content">
+      <span class="close-modal">&times;</span>
+      <h3 id="modalTitle"></h3>
+      <div>
+        <strong>股票代码：</strong>
+        <span id="modalSymbol"></span>
+      </div>
+      <div>
+        <strong>公司名称：</strong>
+        <span id="modalCompany"></span>
+      </div>
+      <div>
+        <strong>摘要：</strong>
+        <div id="modalSummary"></div>
       </div>
     </div>
   </div>
