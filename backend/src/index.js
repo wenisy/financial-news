@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const { runAnalysis } = require('./controllers/analysisController');
 const configRoutes = require('./routes/configRoutes');
@@ -24,7 +25,14 @@ app.use(cors({
 }));
 
 // 静态文件服务 - 提供前端构建后的静态资源
-app.use(express.static(path.join(__dirname, '../../frontend/build')));
+const frontendBuildPath = path.join(__dirname, '../../frontend/build');
+console.log('前端构建路径:', frontendBuildPath);
+app.use(express.static(frontendBuildPath));
+
+// 如果前端构建目录不存在，尝试使用public目录
+const publicPath = path.join(__dirname, '../public');
+console.log('后端public路径:', publicPath);
+app.use(express.static(publicPath));
 
 // 路由
 app.use('/api/auth', authRoutes);
@@ -86,8 +94,53 @@ app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api')) {
     return next();
   }
-  // 否则返回前端应用
-  res.sendFile(path.join(__dirname, '../../frontend/build/index.html'));
+
+  // 尝试发送前端构建目录中的index.html
+  const frontendIndexPath = path.join(__dirname, '../../frontend/build/index.html');
+  if (fs.existsSync(frontendIndexPath)) {
+    return res.sendFile(frontendIndexPath);
+  }
+
+  // 如果前端构建目录中的index.html不存在，尝试发送后端public目录中的index.html
+  const publicIndexPath = path.join(__dirname, '../public/index.html');
+  if (fs.existsSync(publicIndexPath)) {
+    return res.sendFile(publicIndexPath);
+  }
+
+  // 如果都不存在，返回简单的HTML
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>金融新闻分析工具</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+          h1 { color: #1a73e8; }
+          .error { color: #d93025; }
+        </style>
+      </head>
+      <body>
+        <h1>金融新闻分析工具</h1>
+        <p class="error">前端资源未找到，请确保已正确构建前端。</p>
+        <p>API状态: <span id="api-status">检查中...</span></p>
+
+        <script>
+          fetch('/api')
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('api-status').textContent = '正常 ✅';
+              document.getElementById('api-status').style.color = 'green';
+            })
+            .catch(error => {
+              document.getElementById('api-status').textContent = '异常 ❌';
+              document.getElementById('api-status').style.color = 'red';
+            });
+        </script>
+      </body>
+    </html>
+  `);
 });
 
 // 启动服务器

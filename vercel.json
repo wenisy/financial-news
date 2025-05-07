@@ -8,17 +8,8 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "backend/src/index.js"
-    },
-    {
       "src": "/(.*)",
       "dest": "backend/src/index.js"
     }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "backend",
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
