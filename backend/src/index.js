@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const { runAnalysis } = require('./controllers/analysisController');
 const configRoutes = require('./routes/configRoutes');
 const testRoutes = require('./routes/testRoutes');
@@ -13,6 +14,14 @@ const PORT = process.env.PORT || 3000;
 
 // 中间件
 app.use(express.json());
+
+// 启用CORS
+app.use(cors({
+  origin: ['https://financial-news-tan.vercel.app', 'https://financial-news-frontend.vercel.app', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '../public')));
