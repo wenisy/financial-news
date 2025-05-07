@@ -159,7 +159,7 @@ ${content.substring(0, 3000)}...
 
     // 使用系统提示和用户提示
     const messages = [
-      { role: 'system', content: '你是一个专业的金融分析助手，擅长从文章中提取股票相关信息。比如股票的Symbol, 公司的名称' },
+      { role: 'system', content: '你是一个专业的金融分析助手，擅长从文章中提取股票相关信息。比如股票的symbol, 公司的名称. 如果能够解析出多个symbol和company, 那么你只返回一个最相关的就可以了. 不用是数组的形式.' },
       { role: 'user', content: prompt }
     ];
 
