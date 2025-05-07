@@ -151,6 +151,7 @@ ${content.substring(0, 3000)}...
   "symbol": "股票代码，例如AAPL",
   "company": "公司名称，例如Apple Inc."
 }
+注意：股票代码有可能以NYSE:、NASDAQ:等格式出现，请只提取冒号后面的代码部分。比如NYSE:SMRT, 股票代码就是SMRT
 `;
 
     // 创建xAI模型实例
@@ -158,7 +159,7 @@ ${content.substring(0, 3000)}...
 
     // 使用系统提示和用户提示
     const messages = [
-      { role: 'system', content: '你是一个专业的金融分析助手，擅长从文章中提取股票相关信息。' },
+      { role: 'system', content: '你是一个专业的金融分析助手，擅长从文章中提取股票相关信息。比如股票的Symbol, 公司的名称' },
       { role: 'user', content: prompt }
     ];
 
@@ -172,7 +173,9 @@ ${content.substring(0, 3000)}...
 
     try {
       // 尝试解析JSON
+      console.log('AI响应:', text);
       const result = JSON.parse(text);
+      console.log('解析后的结果:', result);
       return {
         symbol: result.symbol || 'Market',
         company: result.company || 'Market'
