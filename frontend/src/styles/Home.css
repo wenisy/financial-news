@@ -292,6 +292,14 @@
   background-color: #f1f3f4;
 }
 
+.results-table tr.error-row {
+  background-color: #fdeded;
+}
+
+.results-table tr.error-row:hover {
+  background-color: #fad2d0;
+}
+
 .title-cell {
   max-width: 300px;
   white-space: nowrap;

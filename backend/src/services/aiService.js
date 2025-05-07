@@ -34,10 +34,9 @@ async function analyzeNews(newsContent, stock, promptTemplate) {
     }
   } catch (error) {
     console.error('AI分析新闻失败:', error);
-    return {
-      summary: '分析过程中出错',
-      sentiment: '中立'
-    };
+    // 抛出错误，而不是返回默认结果
+    // 这样调用方可以捕获错误并决定是否存入Notion
+    throw new Error('分析过程中出错: ' + (error.message || '未知错误'));
   }
 }
 

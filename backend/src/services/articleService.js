@@ -41,23 +41,33 @@ async function analyzeArticleFromUrl(url, stock) {
     }
 
     // 分析文章
-    const analysis = await analyzeNews(article.content, stock);
+    try {
+      const analysis = await analyzeNews(article.content, stock);
 
-    // 保存到Notion
-    await saveToNotion({
-      symbol: stock.symbol,
-      name: stock.name,
-      url: article.url,
-      publishDate: article.publishDate,
-      generatedDate: new Date(),
-      sentiment: analysis.sentiment,
-      summary: analysis.summary
-    });
+      // 只有在分析成功后才保存到Notion
+      await saveToNotion({
+        symbol: stock.symbol,
+        name: stock.name,
+        url: article.url,
+        publishDate: article.publishDate,
+        generatedDate: new Date(),
+        sentiment: analysis.sentiment,
+        summary: analysis.summary
+      });
 
-    return {
-      article,
-      analysis
-    };
+      return {
+        article,
+        analysis
+      };
+    } catch (analysisError) {
+      console.error('分析文章内容失败:', analysisError);
+      // 返回错误信息，但不存入Notion
+      return {
+        article,
+        error: analysisError.message || '分析过程中出错',
+        analysisError: true
+      };
+    }
   } catch (error) {
     console.error('分析文章失败:', error);
     throw error;

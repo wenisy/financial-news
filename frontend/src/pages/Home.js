@@ -470,7 +470,7 @@ const Home = () => {
               </thead>
               <tbody>
                 {batchResults.map((result, index) => (
-                  <tr key={index}>
+                  <tr key={index} className={result.error ? 'error-row' : ''}>
                     <td>{index + 1}</td>
                     <td className="title-cell" title={result.title || result.url}>
                       {result.error ? '处理失败' :
