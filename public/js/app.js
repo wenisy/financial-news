@@ -246,16 +246,28 @@ async function processBatchUrls(urls, symbol, name, analyzeBtn, analyzeResultDiv
           // 分析文章
           const result = await analyzeArticle(url, finalSymbol, finalCompany);
 
-          // 添加到批量结果
-          batchResults.push({
-            url,
-            symbol: finalSymbol,
-            company: finalCompany,
-            title: result.title,
-            publishDate: result.publishDate,
-            summary: result.summary,
-            sentiment: result.sentiment
-          });
+          // 检查是否跳过（文章已存在）
+          if (result.skipped && result.reason === 'article_exists') {
+            // 添加到批量结果（已存在）
+            batchResults.push({
+              url,
+              symbol: finalSymbol,
+              company: finalCompany,
+              skipped: true,
+              reason: '文章已存在于数据库中'
+            });
+          } else {
+            // 添加到批量结果
+            batchResults.push({
+              url,
+              symbol: finalSymbol,
+              company: finalCompany,
+              title: result.title,
+              publishDate: result.publishDate,
+              summary: result.summary,
+              sentiment: result.sentiment
+            });
+          }
 
           // 更新批量结果显示
           updateBatchResultsDisplay();
@@ -322,6 +334,21 @@ function updateBatchResultsDisplay() {
         <h4>结果 #${index + 1} - 处理失败</h4>
         <span class="batch-url">${result.url}</span>
         <div class="error">${result.error}</div>
+      `;
+    } else if (result.skipped) {
+      // 显示跳过结果
+      resultItem.innerHTML = `
+        <h4>结果 #${index + 1} - 已跳过</h4>
+        <span class="batch-url">${result.url}</span>
+        <div>
+          <strong>股票代码：</strong>
+          <span>${result.symbol}</span>
+        </div>
+        <div>
+          <strong>公司名称：</strong>
+          <span>${result.company}</span>
+        </div>
+        <div class="success">${result.reason}</div>
       `;
     } else {
       // 显示成功结果
@@ -409,6 +436,14 @@ async function performAnalysis(url, symbol, company) {
 
     // 分析文章
     const data = await analyzeArticle(url, symbol, company);
+
+    // 检查是否跳过（文章已存在）
+    if (data.skipped && data.reason === 'article_exists') {
+      errorDiv.className = 'success';
+      errorDiv.textContent = '该文章已经分析过，已存在于数据库中';
+      errorDiv.style.display = 'block';
+      return;
+    }
 
     // 显示结果
     document.getElementById('articleTitle').textContent = data.title || '未知标题';

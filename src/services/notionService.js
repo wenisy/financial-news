@@ -2,7 +2,7 @@ const { Client } = require('@notionhq/client');
 
 // 初始化Notion客户端
 const notion = new Client({
-  auth: process.env.NOTION_API_KEY
+  auth: process.env.NOTION_SECRET
 });
 
 // 数据库ID
@@ -17,7 +17,7 @@ async function saveToNotion(data) {
   try {
     // 检查是否已存在相同URL的记录
     const existingPage = await findExistingPage(data.url);
-    
+
     if (existingPage) {
       // 更新现有记录
       return updateNotionPage(existingPage.id, data);
@@ -47,7 +47,7 @@ async function findExistingPage(url) {
         }
       }
     });
-    
+
     return response.results.length > 0 ? response.results[0] : null;
   } catch (error) {
     console.error('查询Notion数据库失败:', error);
@@ -64,7 +64,7 @@ async function createNotionPage(data) {
   // 准备情感分析的emoji
   const sentimentEmoji = getSentimentEmoji(data.sentiment);
   const sentimentText = `${data.sentiment} ${sentimentEmoji}`;
-  
+
   return notion.pages.create({
     parent: {
       database_id: databaseId
@@ -126,7 +126,7 @@ async function updateNotionPage(pageId, data) {
   // 准备情感分析的emoji
   const sentimentEmoji = getSentimentEmoji(data.sentiment);
   const sentimentText = `${data.sentiment} ${sentimentEmoji}`;
-  
+
   return notion.pages.update({
     page_id: pageId,
     properties: {
@@ -169,11 +169,11 @@ async function updateNotionPage(pageId, data) {
  */
 function formatDate(date) {
   if (!date) return new Date().toISOString().split('T')[0];
-  
+
   if (typeof date === 'string') {
     return new Date(date).toISOString().split('T')[0];
   }
-  
+
   return date.toISOString().split('T')[0];
 }
 
@@ -194,6 +194,23 @@ function getSentimentEmoji(sentiment) {
   }
 }
 
+/**
+ * 检查文章是否已存在于数据库中
+ * @param {string} url 文章URL
+ * @returns {Promise<boolean>} 文章是否存在
+ */
+async function isArticleExists(url) {
+  try {
+    const existingPage = await findExistingPage(url);
+    return !!existingPage;
+  } catch (error) {
+    console.error('检查文章是否存在失败:', error);
+    throw error;
+  }
+}
+
 module.exports = {
-  saveToNotion
+  saveToNotion,
+  isArticleExists,
+  findExistingPage
 };

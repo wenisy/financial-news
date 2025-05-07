@@ -50,6 +50,16 @@ router.post('/analyze', async (req, res) => {
     // 执行分析
     const result = await analyzeArticleFromUrl(url, stock);
 
+    // 检查是否跳过（文章已存在）
+    if (result.skipped && result.reason === 'article_exists') {
+      return res.status(200).json({
+        success: true,
+        message: '文章已存在，跳过分析',
+        skipped: true,
+        reason: 'article_exists'
+      });
+    }
+
     // 返回分析结果
     res.status(200).json({
       success: true,

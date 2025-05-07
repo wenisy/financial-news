@@ -12,7 +12,7 @@ const { exec } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 const { analyzeNews } = require('./aiService');
-const { saveToNotion } = require('./notionService');
+const { saveToNotion, isArticleExists } = require('./notionService');
 
 /**
  * 从URL获取文章内容并进行分析
@@ -23,6 +23,13 @@ const { saveToNotion } = require('./notionService');
 async function analyzeArticleFromUrl(url, stock) {
   try {
     console.log(`分析文章: ${url} (${stock.symbol})`);
+
+    // 检查文章是否已存在
+    const exists = await isArticleExists(url);
+    if (exists) {
+      console.log(`文章已存在，跳过分析: ${url}`);
+      return { skipped: true, reason: 'article_exists' };
+    }
 
     // 获取文章内容
     const article = await fetchArticleContent(url);

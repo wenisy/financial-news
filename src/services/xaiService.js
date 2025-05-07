@@ -130,8 +130,8 @@ async function extractStockInfoWithXai(content, title) {
     // 如果文章内容为空，返回默认结果
     if (!content || content.trim() === '') {
       return {
-        symbol: '',
-        company: ''
+        symbol: 'Market',
+        company: 'Market'
       };
     }
 
@@ -174,8 +174,8 @@ ${content.substring(0, 3000)}...
       // 尝试解析JSON
       const result = JSON.parse(text);
       return {
-        symbol: result.symbol || '',
-        company: result.company || ''
+        symbol: result.symbol || 'Market',
+        company: result.company || 'Market'
       };
     } catch (parseError) {
       console.error('解析AI响应JSON失败:', parseError);
@@ -185,15 +185,15 @@ ${content.substring(0, 3000)}...
       const companyMatch = text.match(/"company"\s*:\s*"([^"]+)"/);
 
       return {
-        symbol: symbolMatch ? symbolMatch[1] : '',
-        company: companyMatch ? companyMatch[1] : ''
+        symbol: symbolMatch ? symbolMatch[1] : 'Market',
+        company: companyMatch ? companyMatch[1] : 'Market'
       };
     }
   } catch (error) {
     console.error('xAI提取股票信息失败:', error);
     return {
-      symbol: '',
-      company: ''
+      symbol: 'Market',
+      company: 'Market'
     };
   }
 }
