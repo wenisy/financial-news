@@ -11,8 +11,6 @@ on:
 jobs:
   fetch-news:
     runs-on: ubuntu-latest
-    # 只有在所有必要的Secrets都存在时才运行
-    if: ${{ secrets.NOTION_SECRET != '' && secrets.NOTION_DATABASE_ID != '' && secrets.XAI_API_KEY != '' }}
 
     steps:
       - name: Checkout code
@@ -32,7 +30,30 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y curl
 
-      - name: Fetch Yahoo Finance News
+      - name: Check required secrets
+        id: check_secrets
+        run: |
+          if [ -z "${{ secrets.NOTION_SECRET }}" ]; then
+            echo "::warning::NOTION_SECRET is not set"
+            echo "has_required_secrets=false" >> $GITHUB_OUTPUT
+          elif [ -z "${{ secrets.NOTION_DATABASE_ID }}" ]; then
+            echo "::warning::NOTION_DATABASE_ID is not set"
+            echo "has_required_secrets=false" >> $GITHUB_OUTPUT
+          elif [ -z "${{ secrets.AI_PROVIDER }}" ]; then
+            echo "::warning::AI_PROVIDER is not set"
+            echo "has_required_secrets=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_required_secrets=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fetch Yahoo Finance News (Links Only)
+        if: steps.check_secrets.outputs.has_required_secrets != 'true'
+        run: |
+          echo "Running in links-only mode due to missing required secrets"
+          node scripts/fetch-yahoo-news.js
+
+      - name: Fetch Yahoo Finance News (Full Analysis)
+        if: steps.check_secrets.outputs.has_required_secrets == 'true'
         run: node scripts/fetch-yahoo-news.js
         env:
           # Notion配置
