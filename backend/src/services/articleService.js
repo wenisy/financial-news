@@ -351,8 +351,22 @@ async function fetchWithCurl(url) {
   console.log(`使用curl获取文章: ${url}`);
 
   try {
-    // 创建临时文件路径
-    const tempFile = path.join(__dirname, '../../temp_content.html');
+    // 检测环境并选择适当的临时目录
+    // Vercel 环境中使用 /tmp 目录，其他环境使用相对路径
+    let tempDir;
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      // Vercel 或 AWS Lambda 环境
+      tempDir = '/tmp';
+      console.log('检测到无服务器环境，使用 /tmp 目录');
+    } else {
+      // 本地开发环境
+      tempDir = path.join(__dirname, '../../');
+      console.log('检测到本地环境，使用项目根目录');
+    }
+
+    // 创建临时文件路径，使用时间戳确保唯一性
+    const timestamp = new Date().getTime();
+    const tempFile = path.join(tempDir, `temp_content_${timestamp}.html`);
     console.log(`临时文件路径: ${tempFile}`);
 
     // 构建curl命令
@@ -362,34 +376,60 @@ async function fetchWithCurl(url) {
 
     console.log('执行curl命令...');
 
-    // 执行curl命令
-    await new Promise((resolve, reject) => {
-      exec(curlCommand, (error, stdout, stderr) => {
-        if (error) {
-          console.error('curl命令执行失败:', error);
-          reject(error);
-          return;
-        }
-        if (stderr) {
-          console.log('curl stderr:', stderr);
-        }
-        resolve(stdout);
-      });
-    });
-
-    // 检查文件是否存在
+    // 尝试使用curl命令
+    let htmlContent;
     try {
-      await fs.access(tempFile);
-      console.log('临时文件创建成功');
-    } catch (err) {
-      console.error('临时文件不存在:', err);
-      throw new Error('临时文件创建失败');
-    }
+      await new Promise((resolve, reject) => {
+        exec(curlCommand, (error, stdout, stderr) => {
+          if (error) {
+            console.error('curl命令执行失败:', error);
+            reject(error);
+            return;
+          }
+          if (stderr) {
+            console.log('curl stderr:', stderr);
+          }
+          resolve(stdout);
+        });
+      });
 
-    // 读取下载的文件
-    console.log('读取下载的内容...');
-    const htmlContent = await fs.readFile(tempFile, 'utf8');
-    console.log(`获取到HTML内容，长度: ${htmlContent.length} 字符`);
+      // 检查文件是否存在
+      try {
+        await fs.access(tempFile);
+        console.log('临时文件创建成功');
+
+        // 读取下载的文件
+        console.log('读取下载的内容...');
+        htmlContent = await fs.readFile(tempFile, 'utf8');
+        console.log(`获取到HTML内容，长度: ${htmlContent.length} 字符`);
+      } catch (err) {
+        console.error('临时文件不存在或无法读取:', err);
+        throw new Error('临时文件创建失败');
+      }
+    } catch (curlError) {
+      // curl失败，尝试使用axios作为备选方案
+      console.log('curl方法失败，尝试使用axios作为备选方案...');
+
+      try {
+        console.log('使用axios直接获取内容...');
+        const response = await axios.get(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9'
+          },
+          timeout: 30000,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity
+        });
+
+        htmlContent = response.data;
+        console.log(`使用axios获取到HTML内容，长度: ${htmlContent.length} 字符`);
+      } catch (axiosError) {
+        console.error('axios获取内容也失败:', axiosError);
+        throw new Error('无法获取页面内容: ' + (axiosError.message || '未知错误'));
+      }
+    }
 
     // 使用cheerio解析HTML
     const $ = cheerio.load(htmlContent);
@@ -520,12 +560,18 @@ async function fetchWithCurl(url) {
     const source = new URL(url).hostname;
     console.log(`文章来源: ${source}`);
 
-    // 清理临时文件
-    try {
-      await fs.unlink(tempFile);
-      console.log('临时文件已清理');
-    } catch (unlinkError) {
-      console.error('清理临时文件失败:', unlinkError);
+    // 清理临时文件（如果存在）
+    if (tempFile && htmlContent && !htmlContent.includes('axios')) {
+      try {
+        // 检查文件是否存在
+        await fs.access(tempFile);
+        // 删除文件
+        await fs.unlink(tempFile);
+        console.log('临时文件已清理');
+      } catch (unlinkError) {
+        // 如果文件不存在或无法删除，忽略错误
+        console.log('无需清理临时文件或清理失败:', unlinkError.message);
+      }
     }
 
     console.log('文章内容提取完成，返回结果');
