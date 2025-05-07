@@ -23,7 +23,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: cd backend && npm ci
 
       - name: Install required system dependencies
         run: |
@@ -50,11 +50,11 @@ jobs:
         if: steps.check_secrets.outputs.has_required_secrets != 'true'
         run: |
           echo "Running in links-only mode due to missing required secrets"
-          node scripts/fetch-yahoo-news.js
+          cd backend && node scripts/fetch-yahoo-news.js
 
       - name: Fetch Yahoo Finance News (Full Analysis)
         if: steps.check_secrets.outputs.has_required_secrets == 'true'
-        run: node scripts/fetch-yahoo-news.js
+        run: cd backend && node scripts/fetch-yahoo-news.js
         env:
           # Notion配置
           NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
