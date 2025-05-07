@@ -173,30 +173,56 @@ const Home = () => {
           let finalSymbol = symbol;
           let finalCompany = company;
 
+          let extractSuccess = false;
+
           if (!symbol || !company) {
             try {
               const extractResponse = await articleAPI.extractArticleInfo(url);
-              finalSymbol = symbol || extractResponse.data.symbol || 'Market';
-              finalCompany = company || extractResponse.data.company || 'Market';
+
+              // 检查是否成功获取标题（不是"无法获取标题"）
+              if (extractResponse.data.title && extractResponse.data.title !== '无法获取标题') {
+                finalSymbol = symbol || extractResponse.data.symbol || 'Market';
+                finalCompany = company || extractResponse.data.company || 'Market';
+                extractSuccess = true;
+              } else {
+                console.error(`无法获取文章标题: ${url}`);
+                results.push({
+                  url,
+                  error: '无法获取文章标题',
+                  symbol: symbol || 'Market',
+                  company: company || 'Market'
+                });
+                continue; // 跳过当前文章，处理下一篇
+              }
             } catch (extractErr) {
               console.error(`提取信息失败: ${url}`, extractErr);
-              finalSymbol = symbol || 'Market';
-              finalCompany = company || 'Market';
+              results.push({
+                url,
+                error: extractErr.response?.data?.message || '提取信息失败',
+                symbol: symbol || 'Market',
+                company: company || 'Market'
+              });
+              continue; // 跳过当前文章，处理下一篇
             }
+          } else {
+            // 用户已提供symbol和company，视为提取成功
+            extractSuccess = true;
           }
 
-          // 分析文章
-          const analyzeResponse = await articleAPI.analyzeArticle(url, finalSymbol, finalCompany);
+          // 只有在提取成功后才分析文章
+          if (extractSuccess) {
+            const analyzeResponse = await articleAPI.analyzeArticle(url, finalSymbol, finalCompany);
 
-          results.push({
-            url,
-            title: analyzeResponse.data.title,
-            symbol: finalSymbol,
-            company: finalCompany,
-            publishDate: analyzeResponse.data.publishDate,
-            summary: analyzeResponse.data.summary,
-            sentiment: analyzeResponse.data.sentiment
-          });
+            results.push({
+              url,
+              title: analyzeResponse.data.title,
+              symbol: finalSymbol,
+              company: finalCompany,
+              publishDate: analyzeResponse.data.publishDate,
+              summary: analyzeResponse.data.summary,
+              sentiment: analyzeResponse.data.sentiment
+            });
+          }
         } catch (err) {
           console.error(`处理URL失败: ${url}`, err);
 
