@@ -60,6 +60,28 @@
       background: #ccc;
       cursor: not-allowed;
     }
+    .small-btn {
+      padding: 3px 8px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .primary-btn {
+      background: #1a73e8;
+      color: white;
+    }
+    .secondary-btn {
+      background: #f1f3f4;
+      color: #5f6368;
+      border: 1px solid #dadce0;
+    }
+    .secondary-btn:hover {
+      background: #e8eaed;
+    }
+    .actions {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
     .result {
       margin-top: 20px;
       background: #f9f9f9;
@@ -236,20 +258,39 @@
           </div>
 
           <div>
-            <label for="symbol">股票代码</label>
-            <input type="text" id="symbol" placeholder="AAPL" required>
+            <label for="symbol">股票代码 (选填，AI会尝试提取)</label>
+            <input type="text" id="symbol" placeholder="AAPL">
           </div>
 
           <div>
-            <label for="companyName">公司名称</label>
-            <input type="text" id="companyName" placeholder="Apple Inc." required>
+            <label for="companyName">公司名称 (选填，AI会尝试提取)</label>
+            <input type="text" id="companyName" placeholder="Apple Inc.">
           </div>
 
           <button type="submit" id="analyzeBtn">分析新闻</button>
         </form>
 
+        <div id="extractResult" class="result" style="display: none;">
+          <h3>AI提取结果 <span class="emoji">🔍</span></h3>
+          <p>AI已从文章中提取以下信息，请确认或修改：</p>
+          <div>
+            <strong>股票代码：</strong>
+            <span id="extractedSymbol"></span>
+            <button id="acceptSymbol" class="small-btn">确认</button>
+          </div>
+          <div>
+            <strong>公司名称：</strong>
+            <span id="extractedCompany"></span>
+            <button id="acceptCompany" class="small-btn">确认</button>
+          </div>
+          <div class="actions">
+            <button id="confirmExtract" class="primary-btn">确认并继续分析</button>
+            <button id="cancelExtract" class="secondary-btn">取消</button>
+          </div>
+        </div>
+
         <div id="analyzeResult" class="result" style="display: none;">
-          <h3>分析结果</h3>
+          <h3>分析结果 <span class="emoji">📊</span></h3>
           <div>
             <strong>文章标题：</strong>
             <span id="articleTitle"></span>
@@ -257,6 +298,14 @@
           <div>
             <strong>发布日期：</strong>
             <span id="publishDate"></span>
+          </div>
+          <div>
+            <strong>股票代码：</strong>
+            <span id="resultSymbol"></span>
+          </div>
+          <div>
+            <strong>公司名称：</strong>
+            <span id="resultCompany"></span>
           </div>
           <div>
             <strong>摘要：</strong>

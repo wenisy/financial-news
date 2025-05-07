@@ -7,6 +7,7 @@
 const express = require('express');
 const { analyzeArticleFromUrl, fetchArticleContent } = require('../services/articleService');
 const { verifyToken } = require('../middleware/auth');
+const { extractStockInfo } = require('../services/aiService');
 
 const router = express.Router();
 
@@ -114,6 +115,55 @@ router.post('/content', async (req, res) => {
     res.status(500).json({
       success: false,
       message: '获取文章内容失败',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * 从文章中提取股票代码和公司名称
+ *
+ * POST /api/articles/extract
+ *
+ * 请求体:
+ * {
+ *   "url": "https://example.com/article"
+ * }
+ */
+router.post('/extract', async (req, res) => {
+  try {
+    console.log('收到信息提取请求');
+
+    const { url } = req.body;
+
+    // 验证请求数据
+    if (!url) {
+      return res.status(400).json({
+        success: false,
+        message: '缺少文章URL'
+      });
+    }
+
+    console.log(`从文章中提取信息: ${url}`);
+
+    // 获取文章内容
+    const article = await fetchArticleContent(url);
+
+    // 使用AI提取股票代码和公司名称
+    const extractedInfo = await extractStockInfo(article.content, article.title);
+
+    // 返回提取结果
+    res.status(200).json({
+      success: true,
+      message: '信息提取完成',
+      symbol: extractedInfo.symbol,
+      company: extractedInfo.company
+    });
+  } catch (error) {
+    console.error('提取信息失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '提取信息失败',
       error: error.message
     });
   }
