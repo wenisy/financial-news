@@ -15,7 +15,7 @@ const colors = {
   blink: '\x1b[5m',
   reverse: '\x1b[7m',
   hidden: '\x1b[8m',
-  
+
   fg: {
     black: '\x1b[30m',
     red: '\x1b[31m',
@@ -27,7 +27,7 @@ const colors = {
     white: '\x1b[37m',
     crimson: '\x1b[38m'
   },
-  
+
   bg: {
     black: '\x1b[40m',
     red: '\x1b[41m',
@@ -90,13 +90,13 @@ function ensureDir(dir) {
 // 复制目录
 function copyDir(src, dest) {
   ensureDir(dest);
-  
+
   const entries = fs.readdirSync(src, { withFileTypes: true });
-  
+
   for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
-    
+
     if (entry.isDirectory()) {
       copyDir(srcPath, destPath);
     } else {
@@ -109,37 +109,42 @@ function copyDir(src, dest) {
 async function main() {
   try {
     log('\n=== 开始构建 ===\n', colors.bright + colors.fg.magenta);
-    
+
     // 1. 安装依赖
     info('安装前端依赖...');
     if (!exec('npm install', './frontend')) {
       throw new Error('前端依赖安装失败');
     }
-    
+
     info('安装后端依赖...');
     if (!exec('npm install', './backend')) {
       throw new Error('后端依赖安装失败');
     }
-    
+
     // 2. 构建前端
     info('构建前端...');
     if (!exec('npm run build', './frontend')) {
       throw new Error('前端构建失败');
     }
-    
-    // 3. 确保后端public目录存在
+
+    // 3. 清理并重新创建后端public目录
     const backendPublicDir = path.join(__dirname, 'backend', 'public');
+    info('清理后端public目录...');
+    if (fs.existsSync(backendPublicDir)) {
+      info(`删除目录: ${backendPublicDir}`);
+      fs.rmSync(backendPublicDir, { recursive: true, force: true });
+    }
     ensureDir(backendPublicDir);
-    
+
     // 4. 复制前端构建结果到后端
     info('复制前端构建结果到后端...');
     const frontendBuildDir = path.join(__dirname, 'frontend', 'build');
     copyDir(frontendBuildDir, backendPublicDir);
-    
+
     success('\n=== 构建完成 ===\n');
     info('现在你可以使用以下命令启动应用:');
     log('  cd backend && npm start', colors.fg.yellow);
-    
+
   } catch (err) {
     error(`\n构建失败: ${err.message}\n`);
     process.exit(1);

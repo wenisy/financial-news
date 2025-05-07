@@ -11,7 +11,9 @@
     "build:backend": "cd backend && npm run build",
     "build": "node build.js",
     "start": "cd backend && npm start",
-    "vercel-build": "node build.js"
+    "vercel-build": "node build.js",
+    "clean": "node clean.js",
+    "rebuild": "npm run clean && npm run build"
   },
   "keywords": [
     "finance",

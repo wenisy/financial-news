@@ -34,8 +34,10 @@ jobs:
       - name: Build frontend
         run: cd frontend && npm run build
 
-      - name: Create backend public directory if not exists
-        run: mkdir -p backend/public
+      - name: Clean and recreate backend public directory
+        run: |
+          rm -rf backend/public
+          mkdir -p backend/public
 
       - name: Copy frontend build to backend public
         run: cp -r frontend/build/* backend/public/
