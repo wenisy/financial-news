@@ -182,102 +182,72 @@
     <!-- 登录/注册页面 -->
     <div id="auth-page" class="hidden">
       <h1>金融新闻分析工具 <span class="emoji">📈</span></h1>
-      
+
+      <!-- 只保留登录功能 -->
       <div class="tabs">
         <div class="tab active" data-tab="login">登录</div>
-        <div class="tab" data-tab="register">注册</div>
       </div>
-      
+
       <div class="tab-content active" id="login-tab">
         <div class="card">
           <h2>用户登录 <span class="emoji">🔑</span></h2>
-          
+
           <form id="loginForm">
             <div>
               <label for="loginUsername">用户名</label>
               <input type="text" id="loginUsername" required>
             </div>
-            
+
             <div>
               <label for="loginPassword">密码</label>
               <input type="password" id="loginPassword" required>
             </div>
-            
+
             <button type="submit" id="loginBtn">登录</button>
           </form>
-          
+
           <div id="loginError" class="error" style="display: none;"></div>
         </div>
       </div>
-      
-      <div class="tab-content" id="register-tab">
-        <div class="card">
-          <h2>用户注册 <span class="emoji">📝</span></h2>
-          
-          <form id="registerForm">
-            <div>
-              <label for="registerUsername">用户名</label>
-              <input type="text" id="registerUsername" required>
-            </div>
-            
-            <div>
-              <label for="registerPassword">密码</label>
-              <input type="password" id="registerPassword" required>
-            </div>
-            
-            <div>
-              <label for="registerEmail">电子邮件</label>
-              <input type="email" id="registerEmail">
-            </div>
-            
-            <div>
-              <label for="registerNickname">昵称</label>
-              <input type="text" id="registerNickname">
-            </div>
-            
-            <button type="submit" id="registerBtn">注册</button>
-          </form>
-          
-          <div id="registerError" class="error" style="display: none;"></div>
-        </div>
-      </div>
+
+      <!-- 移除注册功能 -->
     </div>
-    
+
     <!-- 主应用页面 -->
     <div id="main-page" class="hidden">
       <div class="header">
         <h1>金融新闻分析工具 <span class="emoji">📈</span></h1>
-        
+
         <div class="user-info">
           <div class="avatar" id="userAvatar"></div>
           <span id="userNickname"></span>
           <button class="logout-btn" id="logoutBtn">退出登录</button>
         </div>
       </div>
-      
+
       <div class="card">
         <h2>新闻分析 <span class="emoji">🔍</span></h2>
         <p>输入新闻链接和股票信息，分析新闻内容</p>
-        
+
         <form id="analyzeForm">
           <div>
             <label for="newsUrl">新闻链接</label>
             <input type="url" id="newsUrl" placeholder="https://finance.yahoo.com/news/..." required>
           </div>
-          
+
           <div>
             <label for="symbol">股票代码</label>
             <input type="text" id="symbol" placeholder="AAPL" required>
           </div>
-          
+
           <div>
             <label for="companyName">公司名称</label>
             <input type="text" id="companyName" placeholder="Apple Inc." required>
           </div>
-          
+
           <button type="submit" id="analyzeBtn">分析新闻</button>
         </form>
-        
+
         <div id="analyzeResult" class="result" style="display: none;">
           <h3>分析结果</h3>
           <div>
@@ -297,12 +267,12 @@
             <span id="sentiment" class="sentiment"></span>
           </div>
         </div>
-        
+
         <div id="analyzeError" class="error" style="display: none;"></div>
       </div>
     </div>
   </div>
-  
+
   <script src="js/auth.js"></script>
   <script src="js/app.js"></script>
 </body>

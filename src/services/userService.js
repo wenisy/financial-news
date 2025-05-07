@@ -13,6 +13,12 @@ const notion = new Client({
   auth: process.env.NOTION_SECRET
 });
 
+// 打印环境变量状态
+console.log('环境变量状态:');
+console.log('NOTION_SECRET 是否设置:', !!process.env.NOTION_SECRET);
+console.log('NOTION_USERS_DB_ID 是否设置:', !!process.env.NOTION_USERS_DB_ID);
+console.log('JWT_SECRET 是否设置:', !!process.env.JWT_SECRET);
+
 // 用户数据库ID - 使用与stock-backend相同的数据库
 const NOTION_USERS_DB_ID = process.env.NOTION_USERS_DB_ID;
 
@@ -37,6 +43,9 @@ async function getUserByUsername(username) {
       return null;
     }
 
+    console.log(`查询用户: ${username}`);
+    console.log(`使用数据库ID: ${NOTION_USERS_DB_ID}`);
+
     const response = await notion.databases.query({
       database_id: NOTION_USERS_DB_ID,
       filter: {
@@ -45,11 +54,15 @@ async function getUserByUsername(username) {
       },
     });
 
+    console.log(`查询结果数量: ${response.results.length}`);
+
     if (response.results.length === 0) {
       return null;
     }
 
     const user = response.results[0];
+    console.log('用户属性:', JSON.stringify(user.properties, null, 2));
+
     return {
       id: user.id,
       username: user.properties.Username.title[0]?.text.content || '',
@@ -62,6 +75,7 @@ async function getUserByUsername(username) {
     };
   } catch (error) {
     console.error('获取用户失败:', error);
+    console.error('错误详情:', error.stack);
     return null;
   }
 }
@@ -160,17 +174,32 @@ async function updateLastLogin(userId) {
  */
 async function login(username, password) {
   try {
+    console.log(`尝试登录用户: ${username}`);
+    console.log(`NOTION_USERS_DB_ID: ${NOTION_USERS_DB_ID}`);
+    console.log(`NOTION_SECRET 是否设置: ${!!process.env.NOTION_SECRET}`);
+
     const user = await getUserByUsername(username);
 
     if (!user) {
+      console.log(`用户不存在: ${username}`);
       return { success: false, message: '用户名或密码错误' };
     }
 
+    console.log(`找到用户: ${username}`);
+    console.log(`用户ID: ${user.id}`);
+    console.log(`用户UUID: ${user.uuid}`);
+
     // 验证密码
     const hashedPassword = md5Hash(password);
+    console.log(`输入密码哈希: ${hashedPassword}`);
+    console.log(`存储密码哈希: ${user.password}`);
+
     if (hashedPassword !== user.password) {
+      console.log('密码不匹配');
       return { success: false, message: '用户名或密码错误' };
     }
+
+    console.log('密码验证成功');
 
     // 更新最后登录时间
     await updateLastLogin(user.id);

@@ -15,22 +15,29 @@ const router = express.Router();
 router.post('/login', async (req, res) => {
   try {
     console.log('收到登录请求');
+    console.log('请求体:', JSON.stringify(req.body));
 
     const { username, password } = req.body;
 
     if (!username || !password) {
+      console.log('用户名或密码为空');
       return res.status(400).json({ message: '用户名和密码为必填项' });
     }
 
+    console.log(`尝试登录用户: ${username}, 密码长度: ${password.length}`);
+
     const result = await login(username, password);
+    console.log('登录结果:', JSON.stringify(result, null, 2));
 
     if (result.success) {
+      console.log('登录成功, 返回令牌');
       return res.status(200).json({
         message: result.message,
         token: result.token,
         user: result.user
       });
     } else {
+      console.log('登录失败:', result.message);
       return res.status(401).json({ message: result.message });
     }
   } catch (error) {
@@ -40,42 +47,11 @@ router.post('/login', async (req, res) => {
 });
 
 /**
- * 用户注册
+ * 用户注册 - 已禁用
  * POST /api/auth/register
  */
 router.post('/register', async (req, res) => {
-  try {
-    console.log('收到注册请求');
-
-    const { username, password, email, nickname } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ message: '用户名和密码为必填项' });
-    }
-
-    const result = await createUser(username, password, email, nickname);
-
-    if (result.success) {
-      // 注册成功后自动登录
-      const loginResult = await login(username, password);
-      
-      return res.status(201).json({
-        message: result.message,
-        token: loginResult.token,
-        user: {
-          username: result.user.username,
-          nickname: result.user.nickname,
-          email: result.user.email,
-          uuid: result.user.uuid
-        }
-      });
-    } else {
-      return res.status(400).json({ message: result.message });
-    }
-  } catch (error) {
-    console.error('注册处理失败:', error);
-    return res.status(500).json({ message: '服务器内部错误' });
-  }
+  return res.status(403).json({ message: '注册功能已禁用，请联系管理员获取账号' });
 });
 
 module.exports = router;

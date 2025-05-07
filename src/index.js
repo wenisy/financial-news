@@ -19,12 +19,14 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // 路由
 app.use('/api/auth', authRoutes);
-app.use('/api/config', configRoutes);
-app.use('/api', testRoutes);
-app.use('/api/articles', articleRoutes);
 
-// 触发分析的API端点
-app.post('/api/analyze', async (req, res) => {
+// 需要认证的路由
+app.use('/api/config', verifyToken, configRoutes);
+app.use('/api/test', verifyToken, testRoutes);
+app.use('/api/articles', articleRoutes); // 已在路由内部添加认证
+
+// 触发分析的API端点（需要认证）
+app.post('/api/analyze', verifyToken, async (req, res) => {
   try {
     // 启动分析过程
     const analysisProcess = runAnalysis();
@@ -52,6 +54,11 @@ app.get('/health', (req, res) => {
 
 // 主页路由
 app.get('/', (req, res) => {
+  res.redirect('/index.html');
+});
+
+// 重定向旧的测试页面到主页
+app.get('/test.html', (req, res) => {
   res.redirect('/index.html');
 });
 
