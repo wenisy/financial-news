@@ -13,6 +13,8 @@ const Home = () => {
   const [showResults, setShowResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showBatchInputModal, setShowBatchInputModal] = useState(false);
+  const [batchInput, setBatchInput] = useState('');
 
   // 添加新行
   const addRow = () => {
@@ -33,6 +35,42 @@ const Home = () => {
     const newRows = [...inputRows];
     newRows[index][field] = value;
     setInputRows(newRows);
+  };
+
+  // 打开批量输入弹窗
+  const openBatchInputModal = () => {
+    setShowBatchInputModal(true);
+    setBatchInput('');
+  };
+
+  // 关闭批量输入弹窗
+  const closeBatchInputModal = () => {
+    setShowBatchInputModal(false);
+  };
+
+  // 处理批量输入
+  const handleBatchInput = () => {
+    if (!batchInput.trim()) {
+      closeBatchInputModal();
+      return;
+    }
+
+    // 分割输入的链接
+    const urls = batchInput.split(',').map(url => url.trim()).filter(url => url);
+
+    if (urls.length === 0) {
+      closeBatchInputModal();
+      return;
+    }
+
+    // 创建新的输入行
+    const newRows = urls.map(url => ({ url, symbol: '', company: '' }));
+
+    // 更新输入行
+    setInputRows(newRows);
+
+    // 关闭弹窗
+    closeBatchInputModal();
   };
 
   // 处理表单提交
@@ -291,13 +329,23 @@ const Home = () => {
             </div>
 
             <div className="form-actions">
-              <button
-                type="button"
-                onClick={addRow}
-                className="add-btn"
-              >
-                添加新行
-              </button>
+              <div className="left-actions">
+                <button
+                  type="button"
+                  onClick={addRow}
+                  className="add-btn"
+                >
+                  添加新行
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openBatchInputModal}
+                  className="batch-btn"
+                >
+                  批量输入
+                </button>
+              </div>
 
               <button
                 type="submit"
@@ -456,6 +504,31 @@ const Home = () => {
                 <strong>摘要：</strong>
                 <p>{selectedResult.summary || '无摘要'}</p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 批量输入弹窗 */}
+      {showBatchInputModal && (
+        <div className="modal-backdrop" onClick={closeBatchInputModal}>
+          <div className="modal-content batch-input-modal" onClick={e => e.stopPropagation()}>
+            <span className="close-modal" onClick={closeBatchInputModal}>&times;</span>
+            <h3>批量输入新闻链接</h3>
+            <p className="modal-description">请输入多个新闻链接，用逗号分隔（例如：a.com,b.com）</p>
+
+            <div className="batch-input-container">
+              <textarea
+                value={batchInput}
+                onChange={(e) => setBatchInput(e.target.value)}
+                placeholder="https://finance.yahoo.com/news/...,https://finance.yahoo.com/news/..."
+                rows={6}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button onClick={closeBatchInputModal} className="cancel-btn">取消</button>
+              <button onClick={handleBatchInput} className="confirm-btn">确认</button>
             </div>
           </div>
         </div>
