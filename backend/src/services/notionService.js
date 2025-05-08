@@ -112,6 +112,16 @@ async function createNotionPage(data) {
           },
         ],
       },
+      // 富文本属性 - 公司名称
+      Company: {
+        rich_text: [
+          {
+            text: {
+              content: data.name || "",
+            },
+          },
+        ],
+      },
     },
   });
 }
@@ -154,6 +164,16 @@ async function updateNotionPage(pageId, data) {
           {
             text: {
               content: data.summary,
+            },
+          },
+        ],
+      },
+      // 富文本属性 - 公司名称
+      Company: {
+        rich_text: [
+          {
+            text: {
+              content: data.name || "",
             },
           },
         ],
