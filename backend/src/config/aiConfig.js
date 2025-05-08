@@ -80,8 +80,8 @@ module.exports = {
   // 最大令牌数
   maxTokens: currentConfig.maxTokens,
 
-  // 最大内容长度（字符数）
-  maxContentLength: 8000,
+  // 最大内容长度（字符数）用来分析标题, 公司名称, symbol
+  maxContentLength: 3000,
 
   // 系统提示（用于设置AI角色）
   systemPrompt: "你是一位专业的金融分析师，擅长分析新闻对股票的潜在影响。",
