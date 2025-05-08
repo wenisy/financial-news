@@ -63,7 +63,12 @@ async function analyzeNewsWithOpenAI(newsContent, stock, promptTemplate) {
   const prompt = template
     .replace("{stock_name}", stock.name)
     .replace("{stock_symbol}", stock.symbol)
-    .replace("{news_content}", newsContent);
+    .replace(
+      "{news_content}",
+      newsContent.length > 8000
+        ? newsContent.substring(0, 8000) + "..."
+        : newsContent
+    );
 
   // 打印调试信息
   console.log(`准备调用OpenAI API:`);
@@ -209,7 +214,7 @@ async function extractStockInfoWithOpenAI(content, title) {
   // 准备提示
   const prompt = aiConfig.stockInfoPrompt
     .replace("{article_title}", title)
-    .replace("{article_content}", content.substring(0, 3000) + "...");
+    .replace("{article_content}", content.substring(0, 8000) + "...");
 
   try {
     const response = await client.chat.completions.create({
