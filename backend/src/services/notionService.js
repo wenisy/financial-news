@@ -207,9 +207,9 @@ function formatDate(date) {
 function getSentimentEmoji(sentiment) {
   switch (sentiment) {
     case "好":
-      return "😀";
+      return "📈";
     case "坏":
-      return "😞";
+      return "📉";
     case "中立":
       return "😐";
     case "未知":
