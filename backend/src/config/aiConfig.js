@@ -34,6 +34,11 @@ const providerConfigs = {
     baseUrl: "https://api.x.ai/v1",
     model: "grok-3-latest",
     temperature: 0.3,
+    providerOptions: {
+      xai: {
+        reasoningEffort: 'medium', // reasoningEffort 'low' | 'medium' | 'high'
+      },
+    },
     maxTokens: 5000,
   },
 };
@@ -73,6 +78,9 @@ module.exports = {
 
   // 模型名称
   model: currentConfig.model,
+
+  // 提供商选项, 调节xAI的reasoning effort, low | medium | high
+  providerOptions: currentConfig.providerOptions,
 
   // 温度参数（控制创造性）
   temperature: currentConfig.temperature,

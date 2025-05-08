@@ -59,6 +59,7 @@ async function analyzeNewsWithXai(newsContent, stock, promptTemplate) {
     // 调用xAI API
     const { text } = await generateText({
       model,
+      providerOptions: aiConfig.providerOptions,
       messages,
       temperature: aiConfig.temperature,
       maxTokens: aiConfig.maxTokens,
