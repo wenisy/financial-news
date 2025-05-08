@@ -163,18 +163,22 @@ async function updateNotionPage(pageId, data) {
 }
 
 /**
- * 格式化日期为ISO字符串
+ * 格式化日期为北京时间（UTC+8）ISO字符串（包含时分秒）
  * @param {Date} date 日期对象
- * @returns {string} 格式化的日期字符串
+ * @returns {string} 格式化的北京时间日期时间字符串
  */
 function formatDate(date) {
-  if (!date) return new Date().toISOString().split('T')[0];
+  // 如果没有提供日期，使用当前时间
+  const dateObj = date ? (typeof date === 'string' ? new Date(date) : date) : new Date();
 
-  if (typeof date === 'string') {
-    return new Date(date).toISOString().split('T')[0];
-  }
+  // 获取UTC时间
+  const utcTime = dateObj.getTime();
 
-  return date.toISOString().split('T')[0];
+  // 转换为北京时间 (UTC+8)
+  const beijingTime = new Date(utcTime + 8 * 60 * 60 * 1000);
+
+  // 返回ISO格式字符串
+  return beijingTime.toISOString();
 }
 
 /**
