@@ -34,7 +34,7 @@ const providerConfigs = {
     baseUrl: "https://api.x.ai/v1",
     model: "grok-3-latest",
     temperature: 0.3,
-    maxTokens: 500,
+    maxTokens: 5000,
   },
 };
 
@@ -79,6 +79,9 @@ module.exports = {
 
   // 最大令牌数
   maxTokens: currentConfig.maxTokens,
+
+  // 最大内容长度（字符数）
+  maxContentLength: 8000,
 
   // 系统提示（用于设置AI角色）
   systemPrompt: "你是一位专业的金融分析师，擅长分析新闻对股票的潜在影响。",
