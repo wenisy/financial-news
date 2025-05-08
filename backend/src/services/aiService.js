@@ -177,8 +177,8 @@ async function extractStockInfoWithOpenAI(content, title) {
         },
         { role: "user", content: prompt },
       ],
-      temperature: 0.3,
-      max_tokens: 500,
+      temperature: aiConfig.temperature,
+      max_tokens: aiConfig.maxTokens,
       response_format: { type: "json_object" },
     });
 
