@@ -1,8 +1,8 @@
-const { Client } = require('@notionhq/client');
+const { Client } = require("@notionhq/client");
 
 // 初始化Notion客户端
 const notion = new Client({
-  auth: process.env.NOTION_SECRET
+  auth: process.env.NOTION_SECRET,
 });
 
 // 数据库ID
@@ -26,7 +26,7 @@ async function saveToNotion(data) {
       return createNotionPage(data);
     }
   } catch (error) {
-    console.error('保存到Notion失败:', error);
+    console.error("保存到Notion失败:", error);
     throw error;
   }
 }
@@ -41,16 +41,16 @@ async function findExistingPage(url) {
     const response = await notion.databases.query({
       database_id: databaseId,
       filter: {
-        property: '文章链接',
+        property: "文章链接",
         url: {
-          equals: url
-        }
-      }
+          equals: url,
+        },
+      },
     });
 
     return response.results.length > 0 ? response.results[0] : null;
   } catch (error) {
-    console.error('查询Notion数据库失败:', error);
+    console.error("查询Notion数据库失败:", error);
     return null;
   }
 }
@@ -67,52 +67,52 @@ async function createNotionPage(data) {
 
   return notion.pages.create({
     parent: {
-      database_id: databaseId
+      database_id: databaseId,
     },
     properties: {
       // 标题属性 - 股票符号
-      'Symbol': {
+      Symbol: {
         title: [
           {
             text: {
-              content: data.symbol
-            }
-          }
-        ]
+              content: data.symbol,
+            },
+          },
+        ],
       },
       // URL属性 - 文章链接
-      '文章链接': {
-        url: data.url
+      文章链接: {
+        url: data.url,
       },
       // 日期属性 - 文章日期
-      '文章日期': {
+      文章日期: {
         date: {
-          start: formatDate(data.publishDate)
-        }
+          start: formatDate(data.publishDate),
+        },
       },
       // 日期属性 - 生成日期
-      '生成日期': {
+      生成日期: {
         date: {
-          start: formatDate(data.generatedDate)
-        }
+          start: formatDate(data.generatedDate),
+        },
       },
       // 选择属性 - 情感分析
-      '情感分析': {
+      情感分析: {
         select: {
-          name: sentimentText
-        }
+          name: sentimentText,
+        },
       },
       // 富文本属性 - 摘要
-      '摘要': {
+      摘要: {
         rich_text: [
           {
             text: {
-              content: data.summary
-            }
-          }
-        ]
-      }
-    }
+              content: data.summary,
+            },
+          },
+        ],
+      },
+    },
   });
 }
 
@@ -131,54 +131,52 @@ async function updateNotionPage(pageId, data) {
     page_id: pageId,
     properties: {
       // 日期属性 - 文章日期
-      '文章日期': {
+      文章日期: {
         date: {
-          start: formatDate(data.publishDate)
-        }
+          start: formatDate(data.publishDate),
+        },
       },
       // 日期属性 - 生成日期
-      '生成日期': {
+      生成日期: {
         date: {
-          start: formatDate(data.generatedDate)
-        }
+          start: formatDate(data.generatedDate),
+        },
       },
       // 选择属性 - 情感分析
-      '情感分析': {
+      情感分析: {
         select: {
-          name: sentimentText
-        }
+          name: sentimentText,
+        },
       },
       // 富文本属性 - 摘要
-      '摘要': {
+      摘要: {
         rich_text: [
           {
             text: {
-              content: data.summary
-            }
-          }
-        ]
-      }
-    }
+              content: data.summary,
+            },
+          },
+        ],
+      },
+    },
   });
 }
 
 /**
- * 格式化日期为北京时间（UTC+8）ISO字符串（包含时分秒）
+ * 格式化日期为ISO字符串（包含时分秒）
  * @param {Date} date 日期对象
- * @returns {string} 格式化的北京时间日期时间字符串
+ * @returns {string} 格式化的日期时间字符串
  */
 function formatDate(date) {
   // 如果没有提供日期，使用当前时间
-  const dateObj = date ? (typeof date === 'string' ? new Date(date) : date) : new Date();
-
-  // 获取UTC时间
-  const utcTime = dateObj.getTime();
-
-  // 转换为北京时间 (UTC+8)
-  const beijingTime = new Date(utcTime + 8 * 60 * 60 * 1000);
+  const dateObj = date
+    ? typeof date === "string"
+      ? new Date(date)
+      : date
+    : new Date();
 
   // 返回ISO格式字符串
-  return beijingTime.toISOString();
+  return dateObj.toISOString();
 }
 
 /**
@@ -188,13 +186,13 @@ function formatDate(date) {
  */
 function getSentimentEmoji(sentiment) {
   switch (sentiment) {
-    case '好':
-      return '😀';
-    case '坏':
-      return '😞';
-    case '中立':
+    case "好":
+      return "😀";
+    case "坏":
+      return "😞";
+    case "中立":
     default:
-      return '😐';
+      return "😐";
   }
 }
 
@@ -208,7 +206,7 @@ async function isArticleExists(url) {
     const existingPage = await findExistingPage(url);
     return !!existingPage;
   } catch (error) {
-    console.error('检查文章是否存在失败:', error);
+    console.error("检查文章是否存在失败:", error);
     throw error;
   }
 }
@@ -216,5 +214,5 @@ async function isArticleExists(url) {
 module.exports = {
   saveToNotion,
   isArticleExists,
-  findExistingPage
+  findExistingPage,
 };
