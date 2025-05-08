@@ -1,13 +1,13 @@
-const OpenAI = require('openai');
-const aiConfig = require('../config/aiConfig');
-const { analyzeNewsWithXai, extractStockInfoWithXai } = require('./xaiService');
+const OpenAI = require("openai");
+const aiConfig = require("../config/aiConfig");
+const { analyzeNewsWithXai, extractStockInfoWithXai } = require("./xaiService");
 
 // 初始化OpenAI客户端（仅在使用OpenAI时使用）
 let client;
 if (aiConfig.provider === aiConfig.AI_PROVIDERS.OPENAI) {
   client = new OpenAI({
     apiKey: aiConfig.apiKey,
-    baseUrl: aiConfig.baseUrl
+    baseUrl: aiConfig.baseUrl,
   });
 }
 
@@ -33,10 +33,10 @@ async function analyzeNews(newsContent, stock, promptTemplate) {
       throw new Error(`不支持的AI提供商: ${aiConfig.provider}`);
     }
   } catch (error) {
-    console.error('AI分析新闻失败:', error);
+    console.error("AI分析新闻失败:", error);
     // 抛出错误，而不是返回默认结果
     // 这样调用方可以捕获错误并决定是否存入Notion
-    throw new Error('分析过程中出错: ' + (error.message || '未知错误'));
+    throw new Error("分析过程中出错: " + (error.message || "未知错误"));
   }
 }
 
@@ -49,10 +49,10 @@ async function analyzeNews(newsContent, stock, promptTemplate) {
  */
 async function analyzeNewsWithOpenAI(newsContent, stock, promptTemplate) {
   // 如果新闻内容为空，返回默认结果
-  if (!newsContent || newsContent.trim() === '') {
+  if (!newsContent || newsContent.trim() === "") {
     return {
-      summary: '无法获取新闻内容',
-      sentiment: '中立'
+      summary: "无法获取新闻内容",
+      sentiment: "中立",
     };
   }
 
@@ -61,25 +61,29 @@ async function analyzeNewsWithOpenAI(newsContent, stock, promptTemplate) {
 
   // 准备提示
   const prompt = template
-    .replace('{stock_name}', stock.name)
-    .replace('{stock_symbol}', stock.symbol)
-    .replace('{news_content}', newsContent);
+    .replace("{stock_name}", stock.name)
+    .replace("{stock_symbol}", stock.symbol)
+    .replace("{news_content}", newsContent);
 
   // 打印调试信息
   console.log(`准备调用OpenAI API:`);
   console.log(`- 基础URL: ${aiConfig.baseUrl}`);
   console.log(`- 模型: ${aiConfig.model}`);
-  console.log(`- API密钥前缀: ${aiConfig.apiKey ? aiConfig.apiKey.substring(0, 10) + '...' : '未设置'}`);
+  console.log(
+    `- API密钥前缀: ${
+      aiConfig.apiKey ? aiConfig.apiKey.substring(0, 10) + "..." : "未设置"
+    }`
+  );
 
   try {
     const response = await client.chat.completions.create({
       model: aiConfig.model,
       messages: [
-        { role: 'system', content: aiConfig.systemPrompt },
-        { role: 'user', content: prompt }
+        { role: "system", content: aiConfig.systemPrompt },
+        { role: "user", content: prompt },
       ],
       temperature: aiConfig.temperature,
-      max_tokens: aiConfig.maxTokens
+      max_tokens: aiConfig.maxTokens,
     });
 
     // 解析响应
@@ -91,7 +95,7 @@ async function analyzeNewsWithOpenAI(newsContent, stock, promptTemplate) {
 
     return {
       summary,
-      sentiment
+      sentiment,
     };
   } catch (apiError) {
     console.error(`调用OpenAI API失败:`, apiError);
@@ -102,7 +106,7 @@ async function analyzeNewsWithOpenAI(newsContent, stock, promptTemplate) {
     }
 
     // 检查是否是URL错误
-    if (apiError.code === 'ENOTFOUND' || apiError.code === 'ECONNREFUSED') {
+    if (apiError.code === "ENOTFOUND" || apiError.code === "ECONNREFUSED") {
       console.error(`连接失败: 无法连接到 ${aiConfig.baseUrl}`);
     }
 
@@ -140,14 +144,22 @@ function extractSentiment(content) {
 
   // 如果没有找到特定格式，尝试根据关键词判断
   const lowerContent = content.toLowerCase();
-  if (lowerContent.includes('正面') || lowerContent.includes('积极') || lowerContent.includes('利好')) {
-    return '好';
-  } else if (lowerContent.includes('负面') || lowerContent.includes('消极') || lowerContent.includes('利空')) {
-    return '坏';
+  if (
+    lowerContent.includes("正面") ||
+    lowerContent.includes("积极") ||
+    lowerContent.includes("利好")
+  ) {
+    return "好";
+  } else if (
+    lowerContent.includes("负面") ||
+    lowerContent.includes("消极") ||
+    lowerContent.includes("利空")
+  ) {
+    return "坏";
   }
 
   // 默认返回中立
-  return '中立';
+  return "中立";
 }
 
 /**
@@ -171,10 +183,10 @@ async function extractStockInfo(content, title) {
       throw new Error(`不支持的AI提供商: ${aiConfig.provider}`);
     }
   } catch (error) {
-    console.error('AI提取股票信息失败:', error);
+    console.error("AI提取股票信息失败:", error);
     return {
-      symbol: 'Market',
-      company: 'Market'
+      symbol: "Market",
+      company: "Market",
     };
   }
 }
@@ -187,41 +199,31 @@ async function extractStockInfo(content, title) {
  */
 async function extractStockInfoWithOpenAI(content, title) {
   // 如果文章内容为空，返回默认结果
-  if (!content || content.trim() === '') {
+  if (!content || content.trim() === "") {
     return {
-      symbol: 'Market',
-      company: 'Market'
+      symbol: "Market",
+      company: "Market",
     };
   }
 
   // 准备提示
-  const prompt = `
-请从以下文章中提取股票代码和公司名称。
-如果文章中没有明确提到股票代码或公司名称，请尽量根据上下文推断。
-如果实在无法确定，请返回空字符串。
-
-文章标题：${title}
-
-文章内容：
-${content.substring(0, 3000)}...
-
-请以JSON格式返回结果，格式如下：
-{
-  "symbol": "股票代码，例如AAPL",
-  "company": "公司名称，例如Apple Inc."
-}
-`;
+  const prompt = aiConfig.stockInfoPrompt
+    .replace("{article_title}", title)
+    .replace("{article_content}", content.substring(0, 3000) + "...");
 
   try {
     const response = await client.chat.completions.create({
       model: aiConfig.model,
       messages: [
-        { role: 'system', content: '你是一个专业的金融分析助手，擅长从文章中提取股票相关信息。' },
-        { role: 'user', content: prompt }
+        {
+          role: "system",
+          content: aiConfig.stockInfoSystemPrompt,
+        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.3,
       max_tokens: 500,
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     // 解析响应
@@ -231,19 +233,19 @@ ${content.substring(0, 3000)}...
       // 尝试解析JSON
       const result = JSON.parse(content);
       return {
-        symbol: result.symbol || 'Market',
-        company: result.company || 'Market'
+        symbol: result.symbol || "Market",
+        company: result.company || "Market",
       };
     } catch (parseError) {
-      console.error('解析AI响应JSON失败:', parseError);
+      console.error("解析AI响应JSON失败:", parseError);
 
       // 尝试使用正则表达式提取
       const symbolMatch = content.match(/"symbol"\s*:\s*"([^"]+)"/);
       const companyMatch = content.match(/"company"\s*:\s*"([^"]+)"/);
 
       return {
-        symbol: symbolMatch ? symbolMatch[1] : 'Market',
-        company: companyMatch ? companyMatch[1] : 'Market'
+        symbol: symbolMatch ? symbolMatch[1] : "Market",
+        company: companyMatch ? companyMatch[1] : "Market",
       };
     }
   } catch (apiError) {
@@ -256,5 +258,5 @@ ${content.substring(0, 3000)}...
 
 module.exports = {
   analyzeNews,
-  extractStockInfo
+  extractStockInfo,
 };

@@ -10,8 +10,8 @@
 
 // AI提供商类型
 const AI_PROVIDERS = {
-  OPENAI: 'openai',
-  XAI: 'xai'
+  OPENAI: "openai",
+  XAI: "xai",
 };
 
 // 当前使用的AI提供商
@@ -22,26 +22,26 @@ const providerConfigs = {
   // OpenAI配置
   [AI_PROVIDERS.OPENAI]: {
     apiKey: process.env.OPENAI_API_KEY,
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-3.5-turbo',
+    baseUrl: "https://api.openai.com/v1",
+    model: "gpt-3.5-turbo",
     temperature: 0.3,
-    maxTokens: 5000
+    maxTokens: 5000,
   },
 
   // xAI配置
   [AI_PROVIDERS.XAI]: {
     apiKey: process.env.XAI_API_KEY,
-    baseUrl: 'https://api.x.ai/v1',
-    model: 'grok-3-latest',
+    baseUrl: "https://api.x.ai/v1",
+    model: "grok-3-latest",
     temperature: 0.3,
-    maxTokens: 500
-  }
+    maxTokens: 500,
+  },
 };
 
 // 获取当前配置
 if (!providerConfigs[CURRENT_PROVIDER]) {
   console.error(`错误: 未找到提供商 "${CURRENT_PROVIDER}" 的配置`);
-  console.error('可用的提供商:', Object.keys(providerConfigs).join(', '));
+  console.error("可用的提供商:", Object.keys(providerConfigs).join(", "));
   throw new Error(`未找到提供商 "${CURRENT_PROVIDER}" 的配置`);
 }
 
@@ -52,7 +52,9 @@ console.log(`使用AI提供商: ${CURRENT_PROVIDER}, 模型: ${currentConfig.mod
 
 // 验证API密钥
 if (!currentConfig.apiKey) {
-  console.warn(`警告: 未设置 ${CURRENT_PROVIDER.toUpperCase()}_API_KEY 环境变量`);
+  console.warn(
+    `警告: 未设置 ${CURRENT_PROVIDER.toUpperCase()}_API_KEY 环境变量`
+  );
 }
 
 // 导出配置
@@ -79,8 +81,32 @@ module.exports = {
   maxTokens: currentConfig.maxTokens,
 
   // 系统提示（用于设置AI角色）
-  systemPrompt: '你是一位专业的金融分析师，擅长分析新闻对股票的潜在影响。',
+  systemPrompt: "你是一位专业的金融分析师，擅长分析新闻对股票的潜在影响。",
+
+  // 提取股票信息的系统提示
+  stockInfoSystemPrompt:
+    "你是一个专业的金融分析助手，擅长从文章中提取股票相关信息。比如股票的symbol, 公司的名称. 如果能够解析出多个symbol和company, 那么你只返回一个最相关的就可以了. 不用是数组的形式.",
 
   // 新闻分析提示模板
-  newsAnalysisPrompt: '请分析以下关于{stock_name}({stock_symbol})的新闻，并提供简洁的摘要。同时，评估这个新闻对该公司股票的潜在影响是正面、中性还是负面。\n\n新闻内容：\n{news_content}\n\n请按以下格式回答：\n摘要：[新闻摘要，不超过200字]\n影响：[好/中立/坏]'
+  newsAnalysisPrompt:
+    "请分析以下关于{stock_name}({stock_symbol})的新闻，并提供简洁的摘要。同时，评估这个新闻对该公司股票的潜在影响是正面、中性还是负面。\n\n新闻内容：\n{news_content}\n\n请按以下格式回答：\n摘要：[新闻摘要，不超过200字]\n影响：[好/中立/坏]",
+
+  // 提取股票信息的提示模板
+  stockInfoPrompt: `
+请从以下文章中提取股票代码和公司名称。
+如果文章中没有明确提到股票代码或公司名称，请尽量根据上下文推断。
+如果实在无法确定，请返回空字符串。
+
+文章标题：{article_title}
+
+文章内容：
+{article_content}
+
+请以JSON格式返回结果，格式如下：
+{
+  "symbol": "股票代码，例如AAPL",
+  "company": "公司名称，例如Apple Inc."
+}
+注意：股票代码有可能以NYSE:、NASDAQ:等格式出现，请只提取冒号后面的代码部分。比如NYSE:SMRT, 股票代码就是SMRT
+`,
 };
