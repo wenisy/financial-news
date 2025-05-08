@@ -1,10 +1,10 @@
 /**
  * AI 工具函数
- * 
+ *
  * 提供 AI 服务相关的共用工具函数
  */
 
-const aiConfig = require('../config/aiConfig');
+const aiConfig = require("../config/aiConfig");
 
 /**
  * 准备 AI 提示
@@ -64,30 +64,22 @@ function extractSummary(content) {
  * @returns {string} 情感分析结果（好/中立/坏）
  */
 function extractSentiment(content) {
-  // 尝试匹配"影响："后面的内容
-  const sentimentMatch = content.match(/影响：(好|中立|坏)/);
+  // 尝试匹配"影响："后面的内容，包括"好/中立/坏"和"正面/中性/负面"
+  // 同时处理可能的Markdown标记（如**影响：负面**）
+  const sentimentMatch = content.match(
+    /[*]*影响：(好|中立|坏|正面|中性|负面)[*]*/
+  );
   if (sentimentMatch && sentimentMatch[1]) {
-    return sentimentMatch[1].trim();
+    const sentiment = sentimentMatch[1].trim();
+    // 将"正面"映射为"好"，"负面"映射为"坏"
+    if (sentiment === "正面") return "好";
+    if (sentiment === "负面") return "坏";
+    if (sentiment === "中性") return "中立";
+    return sentiment;
   }
 
-  // 如果没有找到特定格式，尝试根据关键词判断
-  const lowerContent = content.toLowerCase();
-  if (
-    lowerContent.includes("正面") ||
-    lowerContent.includes("积极") ||
-    lowerContent.includes("利好")
-  ) {
-    return "好";
-  } else if (
-    lowerContent.includes("负面") ||
-    lowerContent.includes("消极") ||
-    lowerContent.includes("利空")
-  ) {
-    return "坏";
-  }
-
-  // 默认返回中立
-  return "中立";
+  // 如果没有找到特定格式，返回"未知"
+  return "未知";
 }
 
 /**

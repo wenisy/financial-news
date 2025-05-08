@@ -211,8 +211,11 @@ function getSentimentEmoji(sentiment) {
     case "坏":
       return "😞";
     case "中立":
-    default:
       return "😐";
+    case "未知":
+      return "❓";
+    default:
+      return "❓";
   }
 }
 
