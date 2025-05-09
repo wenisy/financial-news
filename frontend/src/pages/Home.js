@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
-import { useAuth } from '../utils/AuthContext';
-import { articleAPI } from '../services/api';
-import '../styles/Home.css';
+import React, { useState } from "react";
+import { useAuth } from "../utils/AuthContext";
+import { articleAPI } from "../services/api";
+import "../styles/Home.css";
 
 const Home = () => {
   const { user, logout } = useAuth();
-  const [inputRows, setInputRows] = useState([{ url: '', symbol: '', company: '' }]);
+  const [inputRows, setInputRows] = useState([
+    { url: "", symbol: "", company: "" },
+  ]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [extractResult, setExtractResult] = useState(null);
   const [batchResults, setBatchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showBatchInputModal, setShowBatchInputModal] = useState(false);
-  const [batchInput, setBatchInput] = useState('');
+  const [batchInput, setBatchInput] = useState("");
 
   // 添加新行
   const addRow = () => {
-    setInputRows([...inputRows, { url: '', symbol: '', company: '' }]);
+    setInputRows([...inputRows, { url: "", symbol: "", company: "" }]);
   };
 
   // 删除行
@@ -37,7 +39,7 @@ const Home = () => {
     setInputRows(newRows);
 
     // 当URL字段更新且不为空时，尝试自动提取股票信息
-    if (field === 'url' && value.trim()) {
+    if (field === "url" && value.trim()) {
       // 防抖：如果用户正在输入，等待一段时间再提取
       const debounceTime = 1000; // 1秒
 
@@ -57,7 +59,10 @@ const Home = () => {
             const response = await articleAPI.extractArticleInfo(value);
 
             // 检查文章是否已存在
-            if (response.data.skipped && response.data.reason === 'article_exists') {
+            if (
+              response.data.skipped &&
+              response.data.reason === "article_exists"
+            ) {
               // 文章已存在，可以在UI上显示提示，或者直接跳过
               console.log(`文章已存在于数据库中: ${value}`);
               // 这里我们选择不更新输入行，但可以添加一个提示
@@ -65,14 +70,14 @@ const Home = () => {
             } else {
               // 更新行数据
               const updatedRows = [...inputRows];
-              updatedRows[index].symbol = response.data.symbol || 'Market';
-              updatedRows[index].company = response.data.company || 'Market';
+              updatedRows[index].symbol = response.data.symbol || "Market";
+              updatedRows[index].company = response.data.company || "Market";
               setInputRows(updatedRows);
             }
             setLoading(false);
           }
         } catch (err) {
-          console.error('自动提取失败:', err);
+          console.error("自动提取失败:", err);
           // 提取失败时不显示错误，静默失败
           setLoading(false);
         }
@@ -83,7 +88,7 @@ const Home = () => {
   // 打开批量输入弹窗
   const openBatchInputModal = () => {
     setShowBatchInputModal(true);
-    setBatchInput('');
+    setBatchInput("");
   };
 
   // 关闭批量输入弹窗
@@ -99,7 +104,10 @@ const Home = () => {
     }
 
     // 分割输入的链接
-    const urls = batchInput.split(',').map(url => url.trim()).filter(url => url);
+    const urls = batchInput
+      .split(",")
+      .map((url) => url.trim())
+      .filter((url) => url);
 
     if (urls.length === 0) {
       closeBatchInputModal();
@@ -107,7 +115,7 @@ const Home = () => {
     }
 
     // 创建新的输入行
-    const newRows = urls.map(url => ({ url, symbol: '', company: '' }));
+    const newRows = urls.map((url) => ({ url, symbol: "", company: "" }));
 
     // 更新输入行
     setInputRows(newRows);
@@ -119,15 +127,15 @@ const Home = () => {
   // 处理表单提交
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setShowResults(false);
     setExtractResult(null);
 
     // 验证输入
-    const validRows = inputRows.filter(row => row.url.trim());
+    const validRows = inputRows.filter((row) => row.url.trim());
 
     if (validRows.length === 0) {
-      setError('请输入至少一个新闻链接');
+      setError("请输入至少一个新闻链接");
       return;
     }
 
@@ -136,7 +144,11 @@ const Home = () => {
   };
 
   // 处理单个URL
-  const processSingleUrl = async (url, initialSymbol = '', initialCompany = '') => {
+  const processSingleUrl = async (
+    url,
+    initialSymbol = "",
+    initialCompany = ""
+  ) => {
     setLoading(true);
 
     try {
@@ -150,28 +162,30 @@ const Home = () => {
       const response = await articleAPI.extractArticleInfo(url);
 
       // 检查文章是否已存在
-      if (response.data.skipped && response.data.reason === 'article_exists') {
+      if (response.data.skipped && response.data.reason === "article_exists") {
         // 文章已存在，直接显示结果
         setShowResults(true);
-        setBatchResults([{
-          url,
-          skipped: true,
-          reason: '文章已存在于数据库中',
-          symbol: 'N/A',
-          company: 'N/A'
-        }]);
+        setBatchResults([
+          {
+            url,
+            skipped: true,
+            reason: "文章已存在于数据库中",
+            symbol: "N/A",
+            company: "N/A",
+          },
+        ]);
         return;
       }
 
       setExtractResult({
         url,
         title: response.data.title,
-        symbol: response.data.symbol || 'Market',
-        company: response.data.company || 'Market'
+        symbol: response.data.symbol || "Market",
+        company: response.data.company || "Market",
       });
     } catch (err) {
-      console.error('处理失败:', err);
-      setError(err.response?.data?.message || '处理失败，请稍后再试');
+      console.error("处理失败:", err);
+      setError(err.response?.data?.message || "处理失败，请稍后再试");
     } finally {
       setLoading(false);
     }
@@ -204,14 +218,17 @@ const Home = () => {
               const extractResponse = await articleAPI.extractArticleInfo(url);
 
               // 检查文章是否已存在
-              if (extractResponse.data.skipped && extractResponse.data.reason === 'article_exists') {
+              if (
+                extractResponse.data.skipped &&
+                extractResponse.data.reason === "article_exists"
+              ) {
                 // 文章已存在，添加到结果中
                 results.push({
                   url,
                   skipped: true,
-                  reason: '文章已存在于数据库中',
-                  symbol: symbol || 'N/A',
-                  company: company || 'N/A'
+                  reason: "文章已存在于数据库中",
+                  symbol: symbol || "N/A",
+                  company: company || "N/A",
                 });
                 // 实时更新结果
                 setBatchResults([...results]);
@@ -219,17 +236,21 @@ const Home = () => {
               }
 
               // 检查是否成功获取标题（不是"无法获取标题"）
-              if (extractResponse.data.title && extractResponse.data.title !== '无法获取标题') {
-                finalSymbol = symbol || extractResponse.data.symbol || 'Market';
-                finalCompany = company || extractResponse.data.company || 'Market';
+              if (
+                extractResponse.data.title &&
+                extractResponse.data.title !== "无法获取标题"
+              ) {
+                finalSymbol = symbol || extractResponse.data.symbol || "Market";
+                finalCompany =
+                  company || extractResponse.data.company || "Market";
                 extractSuccess = true;
               } else {
                 console.error(`无法获取文章标题: ${url}`);
                 results.push({
                   url,
-                  error: '无法获取文章标题',
-                  symbol: symbol || 'Market',
-                  company: company || 'Market'
+                  error: "无法获取文章标题",
+                  symbol: symbol || "Market",
+                  company: company || "Market",
                 });
                 // 实时更新结果
                 setBatchResults([...results]);
@@ -239,9 +260,9 @@ const Home = () => {
               console.error(`提取信息失败: ${url}`, extractErr);
               results.push({
                 url,
-                error: extractErr.response?.data?.message || '提取信息失败',
-                symbol: symbol || 'Market',
-                company: company || 'Market'
+                error: extractErr.response?.data?.message || "提取信息失败",
+                symbol: symbol || "Market",
+                company: company || "Market",
               });
               // 实时更新结果
               setBatchResults([...results]);
@@ -254,7 +275,11 @@ const Home = () => {
 
           // 只有在提取成功后才分析文章
           if (extractSuccess) {
-            const analyzeResponse = await articleAPI.analyzeArticle(url, finalSymbol, finalCompany);
+            const analyzeResponse = await articleAPI.analyzeArticle(
+              url,
+              finalSymbol,
+              finalCompany
+            );
 
             results.push({
               url,
@@ -263,7 +288,7 @@ const Home = () => {
               company: finalCompany,
               publishDate: analyzeResponse.data.publishDate,
               summary: analyzeResponse.data.summary,
-              sentiment: analyzeResponse.data.sentiment
+              sentiment: analyzeResponse.data.sentiment,
             });
 
             // 实时更新结果
@@ -277,17 +302,17 @@ const Home = () => {
             results.push({
               url,
               skipped: true,
-              reason: '文章已存在于数据库中',
-              symbol: symbol || 'Market',
-              company: company || 'Market'
+              reason: "文章已存在于数据库中",
+              symbol: symbol || "Market",
+              company: company || "Market",
             });
           } else {
             // 其他错误
             results.push({
               url,
-              error: err.response?.data?.message || '处理失败',
-              symbol: symbol || 'Market',
-              company: company || 'Market'
+              error: err.response?.data?.message || "处理失败",
+              symbol: symbol || "Market",
+              company: company || "Market",
             });
           }
 
@@ -296,8 +321,8 @@ const Home = () => {
         }
       }
     } catch (err) {
-      console.error('批量处理失败:', err);
-      setError(err.response?.data?.message || '批量处理失败，请稍后再试');
+      console.error("批量处理失败:", err);
+      setError(err.response?.data?.message || "批量处理失败，请稍后再试");
     } finally {
       setLoading(false);
     }
@@ -309,45 +334,57 @@ const Home = () => {
     // 立即显示结果区域
     setShowResults(true);
     // 先显示处理中的状态
-    setBatchResults([{
-      url,
-      title: '处理中...',
-      symbol: symbolValue,
-      company: companyValue,
-      processing: true
-    }]);
-
-    try {
-      const response = await articleAPI.analyzeArticle(url, symbolValue, companyValue);
-
-      setBatchResults([{
+    setBatchResults([
+      {
         url,
-        title: response.data.title,
+        title: "处理中...",
         symbol: symbolValue,
         company: companyValue,
-        publishDate: response.data.publishDate,
-        summary: response.data.summary,
-        sentiment: response.data.sentiment
-      }]);
+        processing: true,
+      },
+    ]);
+
+    try {
+      const response = await articleAPI.analyzeArticle(
+        url,
+        symbolValue,
+        companyValue
+      );
+
+      setBatchResults([
+        {
+          url,
+          title: response.data.title,
+          symbol: symbolValue,
+          company: companyValue,
+          publishDate: response.data.publishDate,
+          summary: response.data.summary,
+          sentiment: response.data.sentiment,
+        },
+      ]);
     } catch (err) {
-      console.error('分析失败:', err);
+      console.error("分析失败:", err);
 
       if (err.response?.data?.skipped) {
         // 文章已存在
-        setBatchResults([{
-          url,
-          skipped: true,
-          reason: '文章已存在于数据库中',
-          symbol: symbolValue,
-          company: companyValue
-        }]);
+        setBatchResults([
+          {
+            url,
+            skipped: true,
+            reason: "文章已存在于数据库中",
+            symbol: symbolValue,
+            company: companyValue,
+          },
+        ]);
       } else {
-        setBatchResults([{
-          url,
-          error: err.response?.data?.message || '分析失败，请稍后再试',
-          symbol: symbolValue,
-          company: companyValue
-        }]);
+        setBatchResults([
+          {
+            url,
+            error: err.response?.data?.message || "分析失败，请稍后再试",
+            symbol: symbolValue,
+            company: companyValue,
+          },
+        ]);
       }
     } finally {
       setLoading(false);
@@ -377,9 +414,21 @@ const Home = () => {
     <div className="home-container">
       <header className="app-header">
         <h1>金融新闻分析工具</h1>
+        <div className="nav-links">
+          <a
+            href="https://binxiong.notion.site/1eb08ce96a0481a48217c88ec51d6b7c?v=1eb08ce96a04816aad3b000c8158d84e"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-link"
+          >
+            查看数据库
+          </a>
+        </div>
         <div className="user-info">
           <span>欢迎, {user?.username}</span>
-          <button onClick={logout} className="logout-btn">登出</button>
+          <button onClick={logout} className="logout-btn">
+            登出
+          </button>
         </div>
       </header>
 
@@ -409,7 +458,9 @@ const Home = () => {
                         <input
                           type="text"
                           value={row.url}
-                          onChange={(e) => updateRowField(index, 'url', e.target.value)}
+                          onChange={(e) =>
+                            updateRowField(index, "url", e.target.value)
+                          }
                           placeholder="https://finance.yahoo.com/news/..."
                           required
                         />
@@ -418,7 +469,9 @@ const Home = () => {
                         <input
                           type="text"
                           value={row.symbol}
-                          onChange={(e) => updateRowField(index, 'symbol', e.target.value)}
+                          onChange={(e) =>
+                            updateRowField(index, "symbol", e.target.value)
+                          }
                           placeholder="AAPL"
                         />
                       </td>
@@ -426,7 +479,9 @@ const Home = () => {
                         <input
                           type="text"
                           value={row.company}
-                          onChange={(e) => updateRowField(index, 'company', e.target.value)}
+                          onChange={(e) =>
+                            updateRowField(index, "company", e.target.value)
+                          }
                           placeholder="Apple Inc."
                         />
                       </td>
@@ -448,11 +503,7 @@ const Home = () => {
 
             <div className="form-actions">
               <div className="left-actions">
-                <button
-                  type="button"
-                  onClick={addRow}
-                  className="add-btn"
-                >
+                <button type="button" onClick={addRow} className="add-btn">
                   添加新行
                 </button>
 
@@ -465,12 +516,8 @@ const Home = () => {
                 </button>
               </div>
 
-              <button
-                type="submit"
-                className="analyze-btn"
-                disabled={loading}
-              >
-                {loading ? '处理中...' : '分析新闻'}
+              <button type="submit" className="analyze-btn" disabled={loading}>
+                {loading ? "处理中..." : "分析新闻"}
               </button>
             </div>
           </form>
@@ -485,15 +532,15 @@ const Home = () => {
             <div className="extract-info">
               <div>
                 <strong>文章标题：</strong>
-                <span>{extractResult.title || '未知标题'}</span>
+                <span>{extractResult.title || "未知标题"}</span>
               </div>
               <div>
                 <strong>股票代码：</strong>
-                <span>{extractResult.symbol || '未找到'}</span>
+                <span>{extractResult.symbol || "未找到"}</span>
               </div>
               <div>
                 <strong>公司名称：</strong>
-                <span>{extractResult.company || '未找到'}</span>
+                <span>{extractResult.company || "未找到"}</span>
               </div>
             </div>
 
@@ -501,7 +548,10 @@ const Home = () => {
               <button onClick={handleConfirmExtract} className="confirm-btn">
                 确认并继续分析
               </button>
-              <button onClick={() => setExtractResult(null)} className="cancel-btn">
+              <button
+                onClick={() => setExtractResult(null)}
+                className="cancel-btn"
+              >
                 取消
               </button>
             </div>
@@ -528,19 +578,28 @@ const Home = () => {
               </thead>
               <tbody>
                 {batchResults.map((result, index) => (
-                  <tr key={index} className={result.error ? 'error-row' : ''}>
+                  <tr key={index} className={result.error ? "error-row" : ""}>
                     <td>{index + 1}</td>
-                    <td className="title-cell" title={result.title || result.url}>
-                      {result.error ? '处理失败' :
-                       result.skipped ? '已跳过' :
-                       result.processing ? '处理中...' :
-                       result.title || '未知标题'}
+                    <td
+                      className="title-cell"
+                      title={result.title || result.url}
+                    >
+                      {result.error
+                        ? "处理失败"
+                        : result.skipped
+                        ? "已跳过"
+                        : result.processing
+                        ? "处理中..."
+                        : result.title || "未知标题"}
                     </td>
                     <td>{result.symbol}</td>
                     <td>{result.company}</td>
                     <td>
-                      {result.error || result.skipped || result.processing ? 'N/A' :
-                       result.publishDate ? new Date(result.publishDate).toLocaleString() : '未知日期'}
+                      {result.error || result.skipped || result.processing
+                        ? "N/A"
+                        : result.publishDate
+                        ? new Date(result.publishDate).toLocaleString()
+                        : "未知日期"}
                     </td>
                     <td>
                       {result.error ? (
@@ -550,16 +609,27 @@ const Home = () => {
                       ) : result.processing ? (
                         <span className="processing">处理中...</span>
                       ) : (
-                        <span className={`sentiment ${
-                          result.sentiment === '好' || result.sentiment === '积极' ? 'good' :
-                          result.sentiment === '中立' ? 'neutral' : 'bad'
-                        }`}>
-                          {result.sentiment || '未知'}
+                        <span
+                          className={`sentiment ${
+                            result.sentiment === "好" ||
+                            result.sentiment === "积极"
+                              ? "good"
+                              : result.sentiment === "中立"
+                              ? "neutral"
+                              : "bad"
+                          }`}
+                        >
+                          {result.sentiment || "未知"}
                         </span>
                       )}
                     </td>
                     <td>
-                      <a href={result.url} target="_blank" rel="noopener noreferrer" className="article-link">
+                      <a
+                        href={result.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="article-link"
+                      >
                         查看原文
                       </a>
                     </td>
@@ -573,7 +643,13 @@ const Home = () => {
                         </button>
                       ) : result.skipped ? (
                         <button
-                          onClick={() => performAnalysis(result.url, result.symbol, result.company)}
+                          onClick={() =>
+                            performAnalysis(
+                              result.url,
+                              result.symbol,
+                              result.company
+                            )
+                          }
                           className="action-btn"
                         >
                           强制分析
@@ -599,10 +675,18 @@ const Home = () => {
 
       {/* 摘要模态框 */}
       {showSummaryModal && selectedResult && (
-        <div className="modal-backdrop" onClick={() => setShowSummaryModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <span className="close-modal" onClick={() => setShowSummaryModal(false)}>&times;</span>
-            <h3>{selectedResult.title || '未知标题'}</h3>
+        <div
+          className="modal-backdrop"
+          onClick={() => setShowSummaryModal(false)}
+        >
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <span
+              className="close-modal"
+              onClick={() => setShowSummaryModal(false)}
+            >
+              &times;
+            </span>
+            <h3>{selectedResult.title || "未知标题"}</h3>
             <div className="modal-info">
               <div>
                 <strong>股票代码：</strong>
@@ -617,21 +701,27 @@ const Home = () => {
                 <span>
                   {selectedResult.publishDate
                     ? new Date(selectedResult.publishDate).toLocaleString()
-                    : '未知日期'}
+                    : "未知日期"}
                 </span>
               </div>
               <div>
                 <strong>情感分析：</strong>
-                <span className={`sentiment ${
-                  selectedResult.sentiment === '好' || selectedResult.sentiment === '积极' ? 'good' :
-                  selectedResult.sentiment === '中立' ? 'neutral' : 'bad'
-                }`}>
-                  {selectedResult.sentiment || '未知'}
+                <span
+                  className={`sentiment ${
+                    selectedResult.sentiment === "好" ||
+                    selectedResult.sentiment === "积极"
+                      ? "good"
+                      : selectedResult.sentiment === "中立"
+                      ? "neutral"
+                      : "bad"
+                  }`}
+                >
+                  {selectedResult.sentiment || "未知"}
                 </span>
               </div>
               <div className="summary-content">
                 <strong>摘要：</strong>
-                <p>{selectedResult.summary || '无摘要'}</p>
+                <p>{selectedResult.summary || "无摘要"}</p>
               </div>
             </div>
           </div>
@@ -641,10 +731,17 @@ const Home = () => {
       {/* 批量输入弹窗 */}
       {showBatchInputModal && (
         <div className="modal-backdrop" onClick={closeBatchInputModal}>
-          <div className="modal-content batch-input-modal" onClick={e => e.stopPropagation()}>
-            <span className="close-modal" onClick={closeBatchInputModal}>&times;</span>
+          <div
+            className="modal-content batch-input-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="close-modal" onClick={closeBatchInputModal}>
+              &times;
+            </span>
             <h3>批量输入新闻链接</h3>
-            <p className="modal-description">请输入多个新闻链接，用逗号分隔（例如：a.com,b.com）</p>
+            <p className="modal-description">
+              请输入多个新闻链接，用逗号分隔（例如：a.com,b.com）
+            </p>
 
             <div className="batch-input-container">
               <textarea
@@ -656,8 +753,12 @@ const Home = () => {
             </div>
 
             <div className="modal-actions">
-              <button onClick={closeBatchInputModal} className="cancel-btn">取消</button>
-              <button onClick={handleBatchInput} className="confirm-btn">确认</button>
+              <button onClick={closeBatchInputModal} className="cancel-btn">
+                取消
+              </button>
+              <button onClick={handleBatchInput} className="confirm-btn">
+                确认
+              </button>
             </div>
           </div>
         </div>

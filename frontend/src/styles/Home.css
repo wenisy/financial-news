@@ -13,6 +13,26 @@
   border-bottom: 1px solid #eee;
 }
 
+.nav-links {
+  display: flex;
+  gap: 15px;
+  margin-left: auto;
+  margin-right: 20px;
+}
+
+.nav-link {
+  color: #1a73e8;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.nav-link:hover {
+  background-color: #e8f0fe;
+  text-decoration: underline;
+}
+
 .app-header h1 {
   margin: 0;
   color: #1a73e8;
