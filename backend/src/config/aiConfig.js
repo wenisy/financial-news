@@ -32,7 +32,7 @@ const providerConfigs = {
   [AI_PROVIDERS.XAI]: {
     apiKey: process.env.XAI_API_KEY,
     baseUrl: "https://api.x.ai/v1",
-    model: "grok-3-latest",
+    model: "grok-3",
     temperature: 0.3,
     // providerOptions: {
     //   xai: {
