@@ -1,6 +1,10 @@
 name: Fetch Yahoo Finance News
 
 on:
+  schedule:
+    # 每2小时运行一次
+    - cron: "0 */2 * * *"
+
   # 允许手动触发
   workflow_dispatch:
 
