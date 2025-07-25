@@ -1,6 +1,7 @@
 const OpenAI = require("openai");
 const aiConfig = require("../config/aiConfig");
 const { analyzeNewsWithXai, extractStockInfoWithXai } = require("./xaiService");
+const { analyzeNewsWithGemini, extractStockInfoWithGemini } = require("./geminiService");
 const {
   preparePrompt,
   prepareStockInfoPrompt,
@@ -36,6 +37,9 @@ async function analyzeNews(newsContent, stock, promptTemplate) {
     } else if (aiConfig.provider === aiConfig.AI_PROVIDERS.OPENAI) {
       // 使用OpenAI服务
       return await analyzeNewsWithOpenAI(newsContent, stock, promptTemplate);
+    } else if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
+      // 使用Google Gemini服务
+      return await analyzeNewsWithGemini(newsContent, stock, promptTemplate);
     } else {
       throw new Error(`不支持的AI提供商: ${aiConfig.provider}`);
     }
@@ -137,6 +141,9 @@ async function extractStockInfo(content, title) {
     } else if (aiConfig.provider === aiConfig.AI_PROVIDERS.OPENAI) {
       // 使用OpenAI服务
       return await extractStockInfoWithOpenAI(content, title);
+    } else if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
+      // 使用Google Gemini服务
+      return await extractStockInfoWithGemini(content, title);
     } else {
       throw new Error(`不支持的AI提供商: ${aiConfig.provider}`);
     }

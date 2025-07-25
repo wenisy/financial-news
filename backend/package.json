@@ -19,6 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "@ai-sdk/xai": "^1.2.15",
+    "@google/generative-ai": "^0.24.1",
     "@notionhq/client": "^2.2.13",
     "ai": "^4.3.13",
     "axios": "^1.6.2",

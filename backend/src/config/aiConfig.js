@@ -12,10 +12,11 @@
 const AI_PROVIDERS = {
   OPENAI: "openai",
   XAI: "xai",
+  GEMINI: "gemini",
 };
 
 // 当前使用的AI提供商
-const CURRENT_PROVIDER = process.env.AI_PROVIDER || AI_PROVIDERS.XAI; // 默认使用xAI
+const CURRENT_PROVIDER = process.env.AI_PROVIDER || AI_PROVIDERS.GEMINI; // 默认使用Gemini
 
 // 各提供商的配置
 const providerConfigs = {
@@ -39,6 +40,15 @@ const providerConfigs = {
     //     reasoningEffort: 'medium', // reasoningEffort 'low' | 'medium' | 'high'
     //   },
     // },
+    maxTokens: 5000,
+  },
+
+  // Google Gemini配置
+  [AI_PROVIDERS.GEMINI]: {
+    apiKey: process.env.GEMINI_API_KEY,
+    baseUrl: "https://generativelanguage.googleapis.com/v1beta",
+    model: "gemini-1.5-flash",
+    temperature: 0.3,
     maxTokens: 5000,
   },
 };
