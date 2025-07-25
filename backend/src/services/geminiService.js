@@ -4,7 +4,7 @@
  * 使用@google/genai库调用Google Gemini的API
  */
 
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const aiConfig = require("../config/aiConfig");
 const {
   preparePrompt,
@@ -22,7 +22,7 @@ function getGeminiClient() {
   if (!aiConfig.apiKey) {
     throw new Error("GEMINI_API_KEY 环境变量未设置");
   }
-  return new GoogleGenAI({ apiKey: aiConfig.apiKey });
+  return new GoogleGenerativeAI(aiConfig.apiKey);
 }
 
 /**
