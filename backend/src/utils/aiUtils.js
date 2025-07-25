@@ -65,9 +65,9 @@ function extractSummary(content) {
  */
 function extractSentiment(content) {
   // 尝试匹配"影响："后面的内容，包括"好/中立/坏"和"正面/中性/负面"
-  // 同时处理可能的Markdown标记（如**影响：负面**）
+  // 同时处理可能的Markdown标记（如**影响：**负面）
   const sentimentMatch = content.match(
-    /[*]*影响：(好|中立|坏|正面|中性|负面)[*]*/
+    /[*]*影响：[*]*(好|中立|坏|正面|中性|负面)[*]*/
   );
   if (sentimentMatch && sentimentMatch[1]) {
     const sentiment = sentimentMatch[1].trim();
@@ -89,8 +89,15 @@ function extractSentiment(content) {
  */
 function processJsonResponse(text) {
   try {
+    // 清理文本，移除markdown代码块标记
+    let cleanText = text.trim();
+
+    // 移除markdown代码块标记
+    cleanText = cleanText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    cleanText = cleanText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+
     // 尝试解析JSON
-    const result = JSON.parse(text);
+    const result = JSON.parse(cleanText);
     return {
       symbol: result.symbol || "Market",
       company: result.company || "Market",
