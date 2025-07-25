@@ -17,7 +17,7 @@ const {
 // 初始化Google Gemini客户端
 let ai;
 if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
-  ai = new GoogleGenAI({ apiKey: aiConfig.apiKey });
+  ai = new GoogleGenAI(aiConfig.apiKey);
 }
 
 /**
@@ -52,20 +52,26 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
       }`
     );
 
-    // 构建完整的提示，包含系统提示
-    const fullPrompt = `${aiConfig.systemPrompt}\n\n${prompt}`;
+    // 获取模型
+    const model = ai.getGenerativeModel({ model: aiConfig.model });
+
+    // 构建提示
+    const systemPrompt = aiConfig.systemPrompt;
+    const userPrompt = prompt;
 
     // 调用Gemini API
-    const response = await ai.models.generateContent({
-      model: aiConfig.model,
-      contents: fullPrompt,
+    const result = await model.generateContent({
+      contents: [
+        { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
+      ],
       generationConfig: {
         temperature: aiConfig.temperature,
         maxOutputTokens: aiConfig.maxTokens,
       },
     });
 
-    const text = response.text;
+    const response = result.response;
+    const text = response.text();
 
     // 提取摘要和情感
     const summary = extractSummary(text);
@@ -109,20 +115,26 @@ async function extractStockInfoWithGemini(content, title) {
     // 准备提示
     const prompt = prepareStockInfoPrompt(title, content);
 
-    // 构建完整的提示，包含系统提示
-    const fullPrompt = `${aiConfig.stockInfoSystemPrompt}\n\n${prompt}`;
+    // 获取模型
+    const model = ai.getGenerativeModel({ model: aiConfig.model });
+
+    // 构建提示
+    const systemPrompt = aiConfig.stockInfoSystemPrompt;
+    const userPrompt = prompt;
 
     // 调用Gemini API
-    const response = await ai.models.generateContent({
-      model: aiConfig.model,
-      contents: fullPrompt,
+    const result = await model.generateContent({
+      contents: [
+        { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
+      ],
       generationConfig: {
         temperature: aiConfig.temperature,
         maxOutputTokens: aiConfig.maxTokens,
       },
     });
 
-    const text = response.text;
+    const response = result.response;
+    const text = response.text();
 
     console.log("AI响应:", text);
     return processJsonResponse(text);
