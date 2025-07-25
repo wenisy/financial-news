@@ -48,9 +48,7 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
     );
 
     // 创建Google Gemini模型实例
-    const model = google(aiConfig.model, {
-      apiKey: aiConfig.apiKey,
-    });
+    const model = google(aiConfig.model);
 
     // 使用系统提示和用户提示
     const messages = [
@@ -109,9 +107,7 @@ async function extractStockInfoWithGemini(content, title) {
     const prompt = prepareStockInfoPrompt(title, content);
 
     // 创建Google Gemini模型实例
-    const model = google(aiConfig.model, {
-      apiKey: aiConfig.apiKey,
-    });
+    const model = google(aiConfig.model);
 
     // 使用系统提示和用户提示
     const messages = [
