@@ -46,7 +46,7 @@ const providerConfigs = {
   // Google Gemini配置
   [AI_PROVIDERS.GEMINI]: {
     apiKey: process.env.GEMINI_API_KEY,
-    model: "gemini-2.5-flash",
+    model: "gemini-2.0-flash-001",
     temperature: 0.3,
     maxTokens: 5000,
   },
