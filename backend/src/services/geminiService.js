@@ -1,10 +1,11 @@
 /**
  * Google Gemini服务
  *
- * 使用@google/generative-ai库调用Google Gemini的API
+ * 使用@ai-sdk/google库调用Google Gemini的API
  */
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { google } = require("@ai-sdk/google");
+const { generateText } = require("ai");
 const aiConfig = require("../config/aiConfig");
 const {
   preparePrompt,
@@ -13,15 +14,6 @@ const {
   extractSentiment,
   processJsonResponse,
 } = require("../utils/aiUtils");
-
-// 初始化Google Gemini客户端
-let genAI;
-let model;
-
-if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
-  genAI = new GoogleGenerativeAI(aiConfig.apiKey);
-  model = genAI.getGenerativeModel({ model: aiConfig.model });
-}
 
 /**
  * 使用Google Gemini分析新闻内容
@@ -55,20 +47,24 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
       }`
     );
 
-    // 构建完整的提示，包含系统提示
-    const fullPrompt = `${aiConfig.systemPrompt}\n\n${prompt}`;
-
-    // 调用Gemini API
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-      generationConfig: {
-        temperature: aiConfig.temperature,
-        maxOutputTokens: aiConfig.maxTokens,
-      },
+    // 创建Google Gemini模型实例
+    const model = google(aiConfig.model, {
+      apiKey: aiConfig.apiKey,
     });
 
-    const response = await result.response;
-    const text = response.text();
+    // 使用系统提示和用户提示
+    const messages = [
+      { role: "system", content: aiConfig.systemPrompt },
+      { role: "user", content: prompt },
+    ];
+
+    // 调用Gemini API
+    const { text } = await generateText({
+      model,
+      messages,
+      temperature: aiConfig.temperature,
+      maxTokens: aiConfig.maxTokens,
+    });
 
     // 提取摘要和情感
     const summary = extractSummary(text);
@@ -112,20 +108,27 @@ async function extractStockInfoWithGemini(content, title) {
     // 准备提示
     const prompt = prepareStockInfoPrompt(title, content);
 
-    // 构建完整的提示，包含系统提示
-    const fullPrompt = `${aiConfig.stockInfoSystemPrompt}\n\n${prompt}`;
-
-    // 调用Gemini API
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
-      generationConfig: {
-        temperature: aiConfig.temperature,
-        maxOutputTokens: aiConfig.maxTokens,
-      },
+    // 创建Google Gemini模型实例
+    const model = google(aiConfig.model, {
+      apiKey: aiConfig.apiKey,
     });
 
-    const response = await result.response;
-    const text = response.text();
+    // 使用系统提示和用户提示
+    const messages = [
+      {
+        role: "system",
+        content: aiConfig.stockInfoSystemPrompt,
+      },
+      { role: "user", content: prompt },
+    ];
+
+    // 调用Gemini API
+    const { text } = await generateText({
+      model,
+      messages,
+      temperature: aiConfig.temperature,
+      maxTokens: aiConfig.maxTokens,
+    });
 
     console.log("AI响应:", text);
     return processJsonResponse(text);
