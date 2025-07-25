@@ -22,7 +22,7 @@ function getGeminiClient() {
   if (!aiConfig.apiKey) {
     throw new Error("GEMINI_API_KEY 环境变量未设置");
   }
-  return new GoogleGenAI(aiConfig.apiKey);
+  return new GoogleGenAI({ apiKey: aiConfig.apiKey });
 }
 
 /**
