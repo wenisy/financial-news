@@ -14,7 +14,10 @@ const {
   processJsonResponse,
 } = require("../utils/aiUtils");
 
-// 初始化Google Gemini客户端
+/**
+ * 获取Google Gemini客户端
+ * @returns {GoogleGenAI} Gemini客户端实例
+ */
 function getGeminiClient() {
   if (!aiConfig.apiKey) {
     throw new Error("GEMINI_API_KEY 环境变量未设置");
@@ -61,18 +64,10 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
     // 构建提示
     const systemPrompt = aiConfig.systemPrompt;
     const userPrompt = prompt;
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     // 调用Gemini API
-    const result = await model.generateContent({
-      contents: [
-        { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
-      ],
-      generationConfig: {
-        temperature: aiConfig.temperature,
-        maxOutputTokens: aiConfig.maxTokens,
-      },
-    });
-
+    const result = await model.generateContent(fullPrompt);
     const response = result.response;
     const text = response.text();
 
@@ -125,18 +120,10 @@ async function extractStockInfoWithGemini(content, title) {
     // 构建提示
     const systemPrompt = aiConfig.stockInfoSystemPrompt;
     const userPrompt = prompt;
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     // 调用Gemini API
-    const result = await model.generateContent({
-      contents: [
-        { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }
-      ],
-      generationConfig: {
-        temperature: aiConfig.temperature,
-        maxOutputTokens: aiConfig.maxTokens,
-      },
-    });
-
+    const result = await model.generateContent(fullPrompt);
     const response = result.response;
     const text = response.text();
 
