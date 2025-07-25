@@ -15,9 +15,11 @@ const {
 } = require("../utils/aiUtils");
 
 // 初始化Google Gemini客户端
-let ai;
-if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
-  ai = new GoogleGenAI(aiConfig.apiKey);
+function getGeminiClient() {
+  if (!aiConfig.apiKey) {
+    throw new Error("GEMINI_API_KEY 环境变量未设置");
+  }
+  return new GoogleGenAI(aiConfig.apiKey);
 }
 
 /**
@@ -52,7 +54,8 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
       }`
     );
 
-    // 获取模型
+    // 获取Gemini客户端和模型
+    const ai = getGeminiClient();
     const model = ai.getGenerativeModel({ model: aiConfig.model });
 
     // 构建提示
@@ -115,7 +118,8 @@ async function extractStockInfoWithGemini(content, title) {
     // 准备提示
     const prompt = prepareStockInfoPrompt(title, content);
 
-    // 获取模型
+    // 获取Gemini客户端和模型
+    const ai = getGeminiClient();
     const model = ai.getGenerativeModel({ model: aiConfig.model });
 
     // 构建提示
