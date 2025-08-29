@@ -17,10 +17,17 @@ const {
 
 // 初始化API密钥管理器
 let apiKeyManager = null;
-if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
-  const keys = aiConfig.apiKeys || [aiConfig.apiKey];
-  apiKeyManager = new ApiKeyManager(keys);
+function initializeApiKeyManager() {
+  if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
+    // 优先使用 GEMINI_API_KEYS，如果没有则使用 GEMINI_API_KEY
+    const keys = aiConfig.apiKeys || (aiConfig.apiKey ? [aiConfig.apiKey] : []);
+    apiKeyManager = new ApiKeyManager(keys);
+    console.log(`Gemini API密钥管理器初始化完成，共 ${keys.length} 个密钥`);
+  }
 }
+
+// 初始化
+initializeApiKeyManager();
 
 /**
  * 获取Google Gemini客户端
