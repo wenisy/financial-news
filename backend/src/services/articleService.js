@@ -46,23 +46,43 @@ async function analyzeArticleFromUrl(url, stock) {
       // 如果传入的是默认的Market，尝试从文章中提取实际的股票信息
       if (stock.symbol === "Market" && stock.name === "Market") {
         console.log("尝试从文章中提取股票信息...");
-        const extractedInfo = await extractStockInfo(
-          article.content,
-          article.title
-        );
-        if (
-          extractedInfo.symbol !== "Market" ||
-          extractedInfo.company !== "Market"
-        ) {
-          stockInfo = {
-            symbol: extractedInfo.symbol,
-            name: extractedInfo.company,
-          };
-          console.log(
-            `成功提取股票信息: ${stockInfo.symbol} (${stockInfo.name})`
+        try {
+          const extractedInfo = await extractStockInfo(
+            article.content,
+            article.title
           );
-        } else {
-          console.log("未能从文章中提取到具体的股票信息，使用默认值");
+          if (
+            extractedInfo.symbol !== "Market" ||
+            extractedInfo.company !== "Market"
+          ) {
+            stockInfo = {
+              symbol: extractedInfo.symbol,
+              name: extractedInfo.company,
+            };
+            console.log(
+              `成功提取股票信息: ${stockInfo.symbol} (${stockInfo.name})`
+            );
+          } else {
+            console.log("未能从文章中提取到具体的股票信息，使用默认值");
+          }
+        } catch (extractError) {
+          // 检查是否是API配额错误
+          if (extractError.message && (
+            extractError.message.includes("quota") ||
+            extractError.message.includes("Too Many Requests") ||
+            extractError.message.includes("429") ||
+            extractError.message.includes("rate limit")
+          )) {
+            console.log("股票信息提取时检测到API配额限制，跳过此文章");
+            return {
+              skipped: true,
+              reason: "api_quota_exceeded",
+              error: "API配额已耗尽，请稍后再试"
+            };
+          }
+          console.error("提取股票信息失败:", extractError);
+          console.log("使用默认股票信息继续处理");
+          // 其他错误继续使用默认值
         }
       }
 
@@ -86,7 +106,23 @@ async function analyzeArticleFromUrl(url, stock) {
       };
     } catch (analysisError) {
       console.error("分析文章内容失败:", analysisError);
-      // 返回错误信息，但不存入Notion
+
+      // 检查是否是API配额错误
+      if (analysisError.message && (
+        analysisError.message.includes("quota") ||
+        analysisError.message.includes("Too Many Requests") ||
+        analysisError.message.includes("429") ||
+        analysisError.message.includes("rate limit")
+      )) {
+        console.log("检测到API配额限制，跳过此文章不存入数据库");
+        return {
+          skipped: true,
+          reason: "api_quota_exceeded",
+          error: "API配额已耗尽，请稍后再试"
+        };
+      }
+
+      // 其他分析错误，返回错误信息但不存入Notion
       return {
         article,
         error: analysisError.message || "分析过程中出错",

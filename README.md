@@ -88,6 +88,11 @@ financial-news/
 - `XAI_API_KEY`: xAI API 密钥
 - `XAI_BASE_URL`: xAI API 基础 URL（可选，默认为 `https://api.xai.com/v1`）
 
+当 `AI_PROVIDER=gemini` 时：
+
+- `GEMINI_API_KEY`: Google Gemini API 密钥
+- `GEMINI_API_KEYS`: 多个 Gemini API 密钥（可选，用逗号分隔，用于轮询避免配额限制）
+
 ### 可选环境变量
 
 - `PORT`: 服务器端口（默认为 3000）

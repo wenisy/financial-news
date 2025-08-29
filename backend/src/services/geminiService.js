@@ -6,6 +6,7 @@
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const aiConfig = require("../config/aiConfig");
+const ApiKeyManager = require("../utils/apiKeyManager");
 const {
   preparePrompt,
   prepareStockInfoPrompt,
@@ -14,15 +15,28 @@ const {
   processJsonResponse,
 } = require("../utils/aiUtils");
 
+// 初始化API密钥管理器
+let apiKeyManager = null;
+if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
+  const keys = aiConfig.apiKeys || [aiConfig.apiKey];
+  apiKeyManager = new ApiKeyManager(keys);
+}
+
 /**
  * 获取Google Gemini客户端
  * @returns {GoogleGenAI} Gemini客户端实例
  */
 function getGeminiClient() {
-  if (!aiConfig.apiKey) {
-    throw new Error("GEMINI_API_KEY 环境变量未设置");
+  if (!apiKeyManager) {
+    throw new Error("API密钥管理器未初始化");
   }
-  return new GoogleGenerativeAI(aiConfig.apiKey);
+
+  const currentKey = apiKeyManager.getCurrentKey();
+  if (!currentKey) {
+    throw new Error("没有可用的GEMINI_API_KEY");
+  }
+
+  return new GoogleGenerativeAI(currentKey);
 }
 
 /**
@@ -82,15 +96,56 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
   } catch (error) {
     console.error("Google Gemini分析新闻失败:", error);
 
+    // 检查是否是配额错误，如果是则尝试下一个密钥
+    if (apiKeyManager && error.message && (
+      error.message.includes('quota') ||
+      error.message.includes('Too Many Requests') ||
+      error.message.includes('429') ||
+      error.message.includes('rate limit')
+    )) {
+      console.log("检测到配额错误，标记当前密钥为失败并尝试下一个");
+      apiKeyManager.markCurrentKeyAsFailed(error);
+
+      // 尝试使用下一个密钥重试一次
+      const nextKey = apiKeyManager.getCurrentKey();
+      if (nextKey) {
+        console.log("使用下一个API密钥重试...");
+        try {
+          const retryAi = new GoogleGenerativeAI(nextKey);
+          const retryModel = retryAi.getGenerativeModel({ model: aiConfig.model });
+          const retryResult = await retryModel.generateContent(fullPrompt);
+          const retryResponse = retryResult.response;
+          const retryText = retryResponse.text();
+
+          const retrySummary = extractSummary(retryText);
+          const retrySentiment = extractSentiment(retryText);
+
+          return {
+            summary: retrySummary,
+            sentiment: retrySentiment,
+          };
+        } catch (retryError) {
+          console.error("重试也失败:", retryError);
+          // 如果重试也是配额错误，标记这个密钥也失败
+          if (retryError.message && (
+            retryError.message.includes('quota') ||
+            retryError.message.includes('Too Many Requests') ||
+            retryError.message.includes('429') ||
+            retryError.message.includes('rate limit')
+          )) {
+            apiKeyManager.markCurrentKeyAsFailed(retryError);
+          }
+        }
+      }
+    }
+
     // 检查是否是认证错误
     if (error.message && error.message.includes("API_KEY")) {
       console.error("认证失败: 请检查GEMINI_API_KEY环境变量是否正确设置");
     }
 
-    return {
-      summary: "分析过程中出错",
-      sentiment: "中立",
-    };
+    // 抛出错误而不是返回默认值，让上层处理
+    throw error;
   }
 }
 
@@ -131,6 +186,49 @@ async function extractStockInfoWithGemini(content, title) {
     return processJsonResponse(text);
   } catch (error) {
     console.error("Google Gemini提取股票信息失败:", error);
+
+    // 检查是否是配额错误，如果是则尝试下一个密钥
+    if (apiKeyManager && error.message && (
+      error.message.includes('quota') ||
+      error.message.includes('Too Many Requests') ||
+      error.message.includes('429') ||
+      error.message.includes('rate limit')
+    )) {
+      console.log("检测到配额错误，标记当前密钥为失败并尝试下一个");
+      apiKeyManager.markCurrentKeyAsFailed(error);
+
+      // 尝试使用下一个密钥重试一次
+      const nextKey = apiKeyManager.getCurrentKey();
+      if (nextKey) {
+        console.log("使用下一个API密钥重试股票信息提取...");
+        try {
+          const retryAi = new GoogleGenerativeAI(nextKey);
+          const retryModel = retryAi.getGenerativeModel({ model: aiConfig.model });
+          const retryResult = await retryModel.generateContent(fullPrompt);
+          const retryResponse = retryResult.response;
+          const retryText = retryResponse.text();
+
+          console.log("重试AI响应:", retryText);
+          return processJsonResponse(retryText);
+        } catch (retryError) {
+          console.error("重试提取股票信息也失败:", retryError);
+          // 如果重试也是配额错误，标记这个密钥也失败
+          if (retryError.message && (
+            retryError.message.includes('quota') ||
+            retryError.message.includes('Too Many Requests') ||
+            retryError.message.includes('429') ||
+            retryError.message.includes('rate limit')
+          )) {
+            apiKeyManager.markCurrentKeyAsFailed(retryError);
+          }
+        }
+      }
+
+      // 如果所有密钥都失败了，抛出错误
+      throw error;
+    }
+
+    // 其他错误返回默认值
     return {
       symbol: "Market",
       company: "Market",

@@ -46,6 +46,8 @@ const providerConfigs = {
   // Google Gemini配置
   [AI_PROVIDERS.GEMINI]: {
     apiKey: process.env.GEMINI_API_KEY,
+    // 支持多个API密钥轮询，用逗号分隔
+    apiKeys: process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',').map(key => key.trim()) : null,
     model: "gemini-2.5-flash",
     temperature: 0.3,
     maxTokens: 5000,
