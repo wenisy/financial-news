@@ -54,9 +54,9 @@ function checkEnvironmentVariables() {
       console.error('警告: 未设置 OPENAI_API_KEY 环境变量');
     }
   } else if (process.env.AI_PROVIDER === 'gemini') {
-    if (!process.env.GEMINI_API_KEY) {
-      missingVars.push('GEMINI_API_KEY');
-      console.error('警告: 未设置 GEMINI_API_KEY 环境变量');
+    if (!process.env.GEMINI_API_KEYS) {
+      missingVars.push('GEMINI_API_KEYS');
+      console.error('警告: 未设置 GEMINI_API_KEYS 环境变量');
     }
   }
 

@@ -19,8 +19,8 @@ const {
 let apiKeyManager = null;
 function initializeApiKeyManager() {
   if (aiConfig.provider === aiConfig.AI_PROVIDERS.GEMINI) {
-    // 优先使用 GEMINI_API_KEYS，如果没有则使用 GEMINI_API_KEY
-    const keys = aiConfig.apiKeys || (aiConfig.apiKey ? [aiConfig.apiKey] : []);
+    // 使用 GEMINI_API_KEYS
+    const keys = aiConfig.apiKeys;
     apiKeyManager = new ApiKeyManager(keys);
     console.log(`Gemini API密钥管理器初始化完成，共 ${keys.length} 个密钥`);
   }
@@ -40,7 +40,7 @@ function getGeminiClient() {
 
   const currentKey = apiKeyManager.getCurrentKey();
   if (!currentKey) {
-    throw new Error("没有可用的GEMINI_API_KEY");
+    throw new Error("没有可用的GEMINI_API_KEYS");
   }
 
   return new GoogleGenerativeAI(currentKey);
@@ -73,8 +73,8 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
     console.log(`准备调用Google Gemini API:`);
     console.log(`- 模型: ${aiConfig.model}`);
     console.log(
-      `- API密钥前缀: ${
-        aiConfig.apiKey ? aiConfig.apiKey.substring(0, 10) + "..." : "未设置"
+      `- 当前API密钥前缀: ${
+        currentKey ? currentKey.substring(0, 10) + "..." : "未设置"
       }`
     );
 
@@ -103,12 +103,15 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
   } catch (error) {
     console.error("Google Gemini分析新闻失败:", error);
 
-    // 检查是否是配额错误，如果是则尝试下一个密钥
+    // 检查是否是配额或服务错误，如果是则尝试下一个密钥
     if (apiKeyManager && error.message && (
       error.message.includes('quota') ||
       error.message.includes('Too Many Requests') ||
       error.message.includes('429') ||
-      error.message.includes('rate limit')
+      error.message.includes('rate limit') ||
+      error.message.includes('503') ||
+      error.message.includes('overloaded') ||
+      error.message.includes('Service Unavailable')
     )) {
       console.log("检测到配额错误，标记当前密钥为失败并尝试下一个");
       apiKeyManager.markCurrentKeyAsFailed(error);
@@ -133,12 +136,15 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
           };
         } catch (retryError) {
           console.error("重试也失败:", retryError);
-          // 如果重试也是配额错误，标记这个密钥也失败
+          // 如果重试也是配额或服务错误，标记这个密钥也失败
           if (retryError.message && (
             retryError.message.includes('quota') ||
             retryError.message.includes('Too Many Requests') ||
             retryError.message.includes('429') ||
-            retryError.message.includes('rate limit')
+            retryError.message.includes('rate limit') ||
+            retryError.message.includes('503') ||
+            retryError.message.includes('overloaded') ||
+            retryError.message.includes('Service Unavailable')
           )) {
             apiKeyManager.markCurrentKeyAsFailed(retryError);
           }
@@ -148,7 +154,7 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
 
     // 检查是否是认证错误
     if (error.message && error.message.includes("API_KEY")) {
-      console.error("认证失败: 请检查GEMINI_API_KEY环境变量是否正确设置");
+      console.error("认证失败: 请检查GEMINI_API_KEYS环境变量是否正确设置");
     }
 
     // 抛出错误而不是返回默认值，让上层处理
@@ -194,12 +200,15 @@ async function extractStockInfoWithGemini(content, title) {
   } catch (error) {
     console.error("Google Gemini提取股票信息失败:", error);
 
-    // 检查是否是配额错误，如果是则尝试下一个密钥
+    // 检查是否是配额或服务错误，如果是则尝试下一个密钥
     if (apiKeyManager && error.message && (
       error.message.includes('quota') ||
       error.message.includes('Too Many Requests') ||
       error.message.includes('429') ||
-      error.message.includes('rate limit')
+      error.message.includes('rate limit') ||
+      error.message.includes('503') ||
+      error.message.includes('overloaded') ||
+      error.message.includes('Service Unavailable')
     )) {
       console.log("检测到配额错误，标记当前密钥为失败并尝试下一个");
       apiKeyManager.markCurrentKeyAsFailed(error);
@@ -219,12 +228,15 @@ async function extractStockInfoWithGemini(content, title) {
           return processJsonResponse(retryText);
         } catch (retryError) {
           console.error("重试提取股票信息也失败:", retryError);
-          // 如果重试也是配额错误，标记这个密钥也失败
+          // 如果重试也是配额或服务错误，标记这个密钥也失败
           if (retryError.message && (
             retryError.message.includes('quota') ||
             retryError.message.includes('Too Many Requests') ||
             retryError.message.includes('429') ||
-            retryError.message.includes('rate limit')
+            retryError.message.includes('rate limit') ||
+            retryError.message.includes('503') ||
+            retryError.message.includes('overloaded') ||
+            retryError.message.includes('Service Unavailable')
           )) {
             apiKeyManager.markCurrentKeyAsFailed(retryError);
           }

@@ -66,10 +66,13 @@ class ApiKeyManager {
    */
   markCurrentKeyAsFailed(error) {
     const isQuotaError = error && error.message && (
-      error.message.includes('quota') || 
+      error.message.includes('quota') ||
       error.message.includes('Too Many Requests') ||
       error.message.includes('429') ||
-      error.message.includes('rate limit')
+      error.message.includes('rate limit') ||
+      error.message.includes('503') ||
+      error.message.includes('Service Unavailable') ||
+      error.message.includes('overloaded')
     );
     
     if (isQuotaError) {

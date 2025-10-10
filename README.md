@@ -90,10 +90,9 @@ financial-news/
 
 当 `AI_PROVIDER=gemini` 时：
 
-- `GEMINI_API_KEY`: Google Gemini API 密钥（单个密钥）
-- `GEMINI_API_KEYS`: 多个 Gemini API 密钥（推荐，用逗号分隔，用于轮询避免配额限制）
+- `GEMINI_API_KEYS`: Google Gemini API 密钥（多个密钥，用逗号分隔，用于轮询避免配额限制）
 
-**注意**：如果同时设置了 `GEMINI_API_KEYS` 和 `GEMINI_API_KEY`，系统会优先使用 `GEMINI_API_KEYS`。
+**注意**：设置 `GEMINI_API_KEYS`，用逗号分隔多个密钥。
 
 ### 可选环境变量
 

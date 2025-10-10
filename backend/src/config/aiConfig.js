@@ -45,7 +45,6 @@ const providerConfigs = {
 
   // Google Gemini配置
   [AI_PROVIDERS.GEMINI]: {
-    apiKey: process.env.GEMINI_API_KEY,
     // 支持多个API密钥轮询，用逗号分隔
     apiKeys: process.env.GEMINI_API_KEYS ? process.env.GEMINI_API_KEYS.split(',').map(key => key.trim()) : null,
     model: "gemini-2.5-flash",
@@ -67,9 +66,9 @@ const currentConfig = providerConfigs[CURRENT_PROVIDER];
 console.log(`使用AI提供商: ${CURRENT_PROVIDER}, 模型: ${currentConfig.model}`);
 
 // 验证API密钥
-if (!currentConfig.apiKey) {
+if (!currentConfig.apiKeys || currentConfig.apiKeys.length === 0) {
   console.warn(
-    `警告: 未设置 ${CURRENT_PROVIDER.toUpperCase()}_API_KEY 环境变量`
+    `警告: 未设置 ${CURRENT_PROVIDER.toUpperCase()}_API_KEYS 环境变量或密钥列表为空`
   );
 }
 
@@ -82,7 +81,7 @@ module.exports = {
   provider: CURRENT_PROVIDER,
 
   // API密钥
-  apiKey: currentConfig.apiKey,
+  apiKeys: currentConfig.apiKeys,
 
   // API基础URL
   baseUrl: currentConfig.baseUrl,
