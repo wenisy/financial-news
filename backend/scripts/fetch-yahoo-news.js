@@ -17,7 +17,7 @@ const { analyzeArticleFromUrl } = require('../src/services/articleService');
 const { isArticleExists } = require('../src/services/notionService');
 
 // Yahoo Finance 股票市场新闻页面URL
-const YAHOO_NEWS_URL = 'https://finance.yahoo.com/topic/stock-market-news/';
+const YAHOO_NEWS_URL = 'https://finance.yahoo.com/topic/latest-news/';
 
 /**
  * 检查必要的环境变量是否已设置
