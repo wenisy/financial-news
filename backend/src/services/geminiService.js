@@ -69,6 +69,12 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
     // 准备提示
     const prompt = preparePrompt(template, stock, newsContent);
 
+    // 构建完整提示
+    const fullPrompt = `${aiConfig.systemPrompt}\n\n${prompt}`;
+
+    // 获取当前API密钥用于调试
+    const currentKey = apiKeyManager.getCurrentKey();
+
     // 打印调试信息
     console.log(`准备调用Google Gemini API:`);
     console.log(`- 模型: ${aiConfig.model}`);
@@ -81,11 +87,6 @@ async function analyzeNewsWithGemini(newsContent, stock, promptTemplate) {
     // 获取Gemini客户端和模型
     const ai = getGeminiClient();
     const model = ai.getGenerativeModel({ model: aiConfig.model });
-
-    // 构建提示
-    const systemPrompt = aiConfig.systemPrompt;
-    const userPrompt = prompt;
-    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     // 调用Gemini API
     const result = await model.generateContent(fullPrompt);
@@ -181,14 +182,12 @@ async function extractStockInfoWithGemini(content, title) {
     // 准备提示
     const prompt = prepareStockInfoPrompt(title, content);
 
+    // 构建完整提示
+    const fullPrompt = `${aiConfig.stockInfoSystemPrompt}\n\n${prompt}`;
+
     // 获取Gemini客户端和模型
     const ai = getGeminiClient();
     const model = ai.getGenerativeModel({ model: aiConfig.model });
-
-    // 构建提示
-    const systemPrompt = aiConfig.stockInfoSystemPrompt;
-    const userPrompt = prompt;
-    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
 
     // 调用Gemini API
     const result = await model.generateContent(fullPrompt);
