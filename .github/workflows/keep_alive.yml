@@ -22,10 +22,16 @@ jobs:
         run: |
           echo "Last activity: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" > .github/LAST_ACTIVITY
 
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --global user.name 'wenisy'
+          git config --global user.email 'wenisy@gmail.com'
           git add .github/LAST_ACTIVITY
-          git diff --staged --quiet || git commit -m "chore: keep repository alive [skip ci]"
-          git push
+
+          # 如果有变更则提交
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: keep repository alive - $(date +'%Y-%m-%d')"
+            git push
+          fi
